@@ -2,6 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const { addEmailToWaitlist, getAllWaitlistEntries } = require('./firebase/services');
 
+require('dotenv').config();
+console.log('Environment variables loaded');
+
 const app = express();
 app.use(cors());
 app.use(express.json());

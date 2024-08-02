@@ -30,7 +30,7 @@ function LandingPage() {
     setSubmitMessage('');
 
     try {
-      const response = await fetch('http://localhost:8000/api/waitlist/join', {
+      const response = await fetch('https://pantry-pal-backend-mauve.vercel.app//api/waitlist/join', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
