@@ -48,10 +48,5 @@ app.get('/api/waitlist/list', async (req, res) => {
   }
 });
 
-
-const PORT = process.env.PORT || 8000;
-
-// Server start
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+// Export the Express app as a serverless function handler
+module.exports = app;
