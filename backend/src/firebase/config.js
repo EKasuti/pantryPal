@@ -1,7 +1,9 @@
-const { initializeApp } = require('firebase-admin/app');
+const { initializeApp, cert } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
+
+let db;
 
 try {
   const serviceAccount = {
@@ -11,14 +13,13 @@ try {
   };
 
   initializeApp({
-    credential: admin.credential.cert(serviceAccount)
+    credential: cert(serviceAccount)
   });
 
-  const db = getFirestore();
+  db = getFirestore();
   console.log('Firestore initialized successfully');
-  
-  module.exports = { db };
 } catch (error) {
   console.error('Error initializing Firebase:', error);
-  process.exit(1);
 }
+
+module.exports = { db };

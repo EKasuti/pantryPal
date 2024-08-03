@@ -4,14 +4,16 @@ const express = require('express');
 const cors = require('cors');
 const { addEmailToWaitlist, getAllWaitlistEntries } = require('./firebase/services');
 
-try {
-  require('dotenv').config();
-  console.log('Environment variables loaded');
-} catch (error) {
-  console.error('Error loading environment variables:', error);
-}
+require('dotenv').config();
+console.log('Environment variables loaded');
 
 const app = express();
+
+app.use((req, res, next) => {
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  next();
+});
+
 app.use(cors());
 app.use(express.json());
 

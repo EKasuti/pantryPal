@@ -6,6 +6,7 @@ import landingPageImage from "../images/landing_page_image.png";
 import recipeImage from "../images/recipe.png";
 import Footer from "../components/Footer";
 import EmailModal from "../components/EmailModal";
+import { API_BASE_URL } from '../config/api';
 
 function LandingPage() {
   const [showModal, setShowModal] = useState(false);
@@ -30,7 +31,7 @@ function LandingPage() {
     setSubmitMessage('');
 
     try {
-      const response = await fetch('https://pantry-pal-backend-mauve.vercel.app//api/waitlist/join', {
+      const response = await fetch(`${API_BASE_URL}/api/waitlist/join`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

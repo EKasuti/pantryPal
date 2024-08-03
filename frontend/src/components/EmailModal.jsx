@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { validateEmail } from '../utils/helper';
+import { API_BASE_URL } from '../config/api';
 
 function EmailModal({ isOpen, onClose }) {
   const [email, setEmail] = useState('');
@@ -19,7 +20,7 @@ function EmailModal({ isOpen, onClose }) {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:8000/api/waitlist/join', {
+      const response = await fetch(`${API_BASE_URL}/api/waitlist/join`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
