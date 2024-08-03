@@ -1,9 +1,15 @@
+console.log('Starting server.js');
+
 const express = require('express');
 const cors = require('cors');
 const { addEmailToWaitlist, getAllWaitlistEntries } = require('./firebase/services');
 
-require('dotenv').config();
-console.log('Environment variables loaded');
+try {
+  require('dotenv').config();
+  console.log('Environment variables loaded');
+} catch (error) {
+  console.error('Error loading environment variables:', error);
+}
 
 const app = express();
 app.use(cors());
@@ -48,5 +54,10 @@ app.get('/api/waitlist/list', async (req, res) => {
   }
 });
 
-// Export the Express app as a serverless function handler
+// Add a catch-all error handler
+app.use((err, req, res, next) => {
+  console.error('Unhandled error:', err);
+  res.status(500).json({ message: 'Internal server error', error: err.message });
+});
+
 module.exports = app;

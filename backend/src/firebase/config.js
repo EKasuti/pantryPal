@@ -1,4 +1,4 @@
-const { initializeApp, cert } = require('firebase-admin/app');
+const { initializeApp } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 const path = require('path');
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
@@ -11,7 +11,7 @@ try {
   };
 
   initializeApp({
-    credential: cert(serviceAccount)
+    credential: admin.credential.cert(serviceAccount)
   });
 
   const db = getFirestore();
