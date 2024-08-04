@@ -2,14 +2,15 @@ console.log('Starting server.js');
 
 const express = require('express');
 const cors = require('cors');
-const { addEmailToWaitlist, getAllWaitlistEntries } = require('./firebase/services');
+const { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry } = require('./firebase/services');
+const admin = require('firebase-admin');
 
 require('dotenv').config();
 
 const app = express();
 
 // Improved CORS configuration
-const allowedOrigins = ['https://pantry-pal-sooty.vercel.app', 'http://localhost:3000'];
+const allowedOrigins = ['https://pantry-pal-sooty.vercel.app', 'http://localhost:8000'];
 app.use(cors({
   origin: function(origin, callback){
     if(!origin) return callback(null, true);
@@ -43,12 +44,11 @@ app.get('/test', (req, res) => {
 app.post('/api/waitlist/join', async (req, res) => {
   const { email } = req.body;
   
-  if (!email) {Z
+  if (!email) {
     return res.status(400).json({ message: 'Email is required' });
   }
 
   try {
-  
     const result = await addEmailToWaitlist(email);
     console.log('Result from addEmailToWaitlist:', result);
     if (result.success) {
@@ -79,12 +79,128 @@ app.get('/api/waitlist/list', async (req, res) => {
 // Firebase connection test route
 app.get('/test-firebase', async (req, res) => {
   try {
-    const db = require('./firebase/config').db;
-    await db.collection('test').doc('test').set({ test: 'test' });
-    res.status(200).json({ message: 'Firebase connection successful' });
+    const testDoc = await db.collection('test').doc('test').set({ test: 'data' });
+    res.json({ message: 'Firebase connection successful', docId: testDoc.id });
   } catch (error) {
-    console.error('Firebase connection error:', error);
+    console.error('Firebase test error:', error);
     res.status(500).json({ message: 'Firebase connection failed', error: error.message });
+  }
+});
+
+// POST route for user signup
+app.post('/api/auth/signup', async (req, res) => {
+  const { email, password } = req.body;
+  
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email and password are required' });
+  }
+
+  try {
+    console.log('Attempting to create user:', email);
+    const result = await createUser(email, password);
+    if (result.success) {
+      res.status(201).json({ message: 'User created successfully', uid: result.uid });
+    } else {
+      console.error('Failed to create user:', result.error);
+      res.status(400).json({ message: 'Failed to create user', error: result.error });
+    }
+  } catch (error) {
+    console.error('Server error:', error);
+    res.status(500).json({ message: 'Server error', error: error.toString() });
+  }
+});
+
+// POST route for user login
+app.post('/api/auth/login', async (req, res) => {
+  const { email, password } = req.body;
+  
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email and password are required' });
+  }
+
+  try {
+    const result = await loginUser(email, password);
+    if (result.success) {
+      res.status(200).json({ 
+        message: 'Login successful', 
+        user: result.user,
+        token: result.token
+      });
+    } else {
+      res.status(401).json({ message: 'Login failed', error: result.error });
+    }
+  } catch (error) {
+    console.error('Server error:', error);
+    res.status(500).json({ message: 'Server error', error: error.toString() });
+  }
+});
+
+// Middleware to verify Firebase ID token
+const authenticateUser = async (req, res, next) => {
+  const idToken = req.headers.authorization?.split('Bearer ')[1];
+  if (!idToken) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  try {
+    console.log('Attempting to verify token:', idToken.substring(0, 10) + '...');
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    console.log('Token verified successfully. User ID:', decodedToken.uid);
+    req.user = decodedToken;
+    next();
+  } catch (error) {
+    console.error('Error verifying token:', error);
+    res.status(401).json({ message: 'Invalid token', error: error.message });
+  }
+};
+
+// POST route to create a pantry
+app.post('/api/pantry/add', authenticateUser, async (req, res) => {
+  const { name } = req.body;
+  const userId = req.user.uid;
+
+  if (!name) {
+    return res.status(400).json({ message: 'Pantry name is required' });
+  }
+
+  try {
+    const result = await createPantry(userId, name);
+    if (result.success) {
+      res.status(201).json({
+        message: 'Pantry created successfully',
+        pantry: result.pantry
+      });
+    } else {
+      res.status(400).json({ message: 'Failed to create pantry', error: result.error });
+    }
+  } catch (error) {
+    console.error('Server error:', error);
+    res.status(500).json({ message: 'Server error', error: error.toString() });
+  }
+});
+
+// POST route to add an item to a pantry
+app.post('/api/pantry/:pantryId/item', authenticateUser, async (req, res) => {
+  const { pantryId } = req.params;
+  const { name, category, quantity, purchaseDate, expiryDate } = req.body;
+
+  if (!name || !category || !quantity) {
+    return res.status(400).json({ message: 'Name, category, and quantity are required' });
+  }
+
+  try {
+    const result = await addItemToPantry(pantryId, { name, category, quantity, purchaseDate, expiryDate });
+    if (result.success) {
+      res.status(201).json({
+        message: 'Item added to pantry successfully',
+        item: result.item
+      });
+    } else {
+      res.status(400).json({ message: 'Failed to add item to pantry', error: result.error });
+    }
+  } catch (error) {
+    console.error('Server error:', error);
+    res.status(500).json({ message: 'Server error', error: error.toString() });
   }
 });
 
@@ -95,3 +211,9 @@ app.use((err, req, res, next) => {
 });
 
 module.exports = app;
+
+// Add these lines at the end of the file
+const PORT = process.env.PORT || 8000;
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
+});
