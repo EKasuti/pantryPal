@@ -29,7 +29,6 @@ function EmailModal({ isOpen, onClose }) {
       });
 
       const data = await response.json();
-      console.log('Server response:', data);  // Log the server response
 
       if (response.ok) {
         setIsSuccess(true);
@@ -41,7 +40,6 @@ function EmailModal({ isOpen, onClose }) {
         throw new Error(data.message || 'An error occurred');
       }
     } catch (error) {
-      console.error('Fetch error:', error);  // Log any fetch errors
       setError(error.message || 'Failed to submit email. Please try again.');
     } finally {
       setIsSubmitting(false);
