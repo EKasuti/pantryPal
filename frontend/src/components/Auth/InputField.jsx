@@ -11,7 +11,9 @@ const InputField = ({ label, type, id, value, onChange, required, placeholder })
         <input
           type={type === 'password' ? (showPassword ? 'text' : 'password') : type}
           id={id}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+            type === 'date' ? 'appearance-none' : ''
+          }`}
           value={value}
           onChange={onChange}
           required={required}
@@ -30,6 +32,7 @@ const InputField = ({ label, type, id, value, onChange, required, placeholder })
             )}
           </button>
         )}
+        
       </div>
     </div>
   );

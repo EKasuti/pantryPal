@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import DashboardNavbar from "../components/Common/DashboardNavbar";
 import Sidebar from "../components/Common/SideBar";
 import SearchBar from "../components/Common/SearchBar";
-import CreatePantry from "../components/Common/CreatePantry";
+import CreatePantry from "../components/Create/CreatePantry";
 import PantryList from "../components/Common/PantryList";
 
 // Data
@@ -31,8 +31,8 @@ function Dashboard() {
         {/* Dashboard */}
         <DashboardNavbar toggleSidebar={toggleSidebar} />
 
-        <main className="overflow-x-hidden overflow-y-auto bg-gray-200">
-          <div className="px-4 py-8">
+        <main className="flex-1 flex flex-col overflow-x-hidden overflow-y-auto bg-gray-100">
+          <div className="px-4 py-8 bg-background">
             <div className="flex justify-between items-center">
               <div className="w-1/2">
                 <SearchBar placeholder="Search Pantry list" />
@@ -47,9 +47,9 @@ function Dashboard() {
             {showCreatePantry && <CreatePantry onClose={toggleCreatePantry} />}
           </div>
 
-          <div className="bg-white rounded-t-lg p-6">
-              <PantryList pantries={pantries} />
-            </div>
+          <div className="flex-grow bg-white rounded-tl-lg rounded-tr-lg p-6">
+            <PantryList pantries={pantries} />
+          </div>
         </main>
       </div>
     </div>

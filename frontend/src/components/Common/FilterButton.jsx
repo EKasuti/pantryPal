@@ -1,11 +1,11 @@
 import React from 'react';
-import { IoSearchOutline } from "react-icons/io5";
+import { CiFilter } from "react-icons/ci";
 
-function SearchBar({ placeholder }) {
+function FilterButton({ placeholder }) {
   return (
     <div className="relative">
       <div className="text-black absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-        <IoSearchOutline className="h-5 w-5" />
+        <CiFilter className="h-5 w-5" />
       </div>
       <input
         type="text"
@@ -16,4 +16,4 @@ function SearchBar({ placeholder }) {
   );
 }
 
-export default SearchBar;
+export default FilterButton;

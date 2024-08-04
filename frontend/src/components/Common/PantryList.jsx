@@ -1,11 +1,23 @@
 import React from 'react';
-import { FaPencilAlt, FaTrash, FaThumbtack } from 'react-icons/fa';
+import { FaThumbtack } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import { MdDeleteOutline, MdEdit} from "react-icons/md";
 
 function PantryList({ pantries }) {
+  const navigate = useNavigate();
+
+  const handlePantryClick = (pantryName) => {
+    navigate(`/dashboard/pantryList/${pantryName}`);
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 ">
       {pantries.map((pantry) => (
-        <div key={pantry.id} className="bg-white rounded-lg shadow-md p-4">
+        <div
+          key={pantry.id}
+          className="bg-white rounded-lg shadow-md p-4 cursor-pointer border"
+          onClick={() => handlePantryClick(pantry.name)}
+        >
           <div className="flex justify-between items-center mb-2">
             <h3 className="text-xl font-semibold">{pantry.name}</h3>
             <button className="text-gray-400 hover:text-gray-600">
@@ -19,19 +31,16 @@ function PantryList({ pantries }) {
             </div>
             <div className="flex justify-between">
               <span>Items:</span>
-              <span>{pantry.items}</span>
+              <span>{pantry.quantity}</span>
             </div>
-            <div className="flex justify-between">
-              <span>Cost:</span>
-              <span>${pantry.cost.toFixed(2)}</span>
-            </div>
+          
           </div>
-          <div className="flex justify-end space-x-2">
+          <div className="flex justify-end space-x-1">
             <button className="text-blue-500 hover:text-blue-700">
-              <FaPencilAlt />
+              <MdEdit size={20} />
             </button>
             <button className="text-red-500 hover:text-red-700">
-              <FaTrash />
+              <MdDeleteOutline size={20} />
             </button>
           </div>
         </div>

@@ -4,6 +4,7 @@ import LandingPage from './pages/landingPage';
 import SignupPage from './pages/Auth/signupPage';
 import LoginPage from './pages/Auth/loginPage';
 import Dashboard from './pages/dashboard';
+import PantryListPage from './pages/pantryListPage';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard/pantryList/:pantryName?" element={<PantryListPage pantryName="Default Pantry" />} />
         </Routes>
       </div>
     </Router>
