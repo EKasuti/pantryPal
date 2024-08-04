@@ -1,43 +1,114 @@
-import React, { useState } from "react"; 
+import React, { useState, useEffect } from "react"; 
 import Sidebar from "../components/Common/SideBar";
 import { useParams, useNavigate } from "react-router-dom";
-import { pantryList } from "../data/PantryList";
 import { MdArrowBackIosNew, MdDeleteOutline, MdEdit, MdOutlineKeyboardArrowUp, MdOutlineKeyboardArrowDown } from "react-icons/md";
 import DashboardNavbar from "../components/Common/DashboardNavbar";
 import SearchBar from "../components/Common/SearchBar";
 import AddItems from "../components/Create/AddItems";
 import FilterButton from "../components/Common/FilterButton";
-
+import { API_BASE_URL } from "../config/api";
 
 function PantryListPage({ pantryName: defaultPantryName }) {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
+    const [pantryItems, setPantryItems] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const { pantryName: urlPantryName } = useParams();
     const currentPantryName = urlPantryName || defaultPantryName || "Pantry 01";
     const navigate = useNavigate();
 
+    useEffect(() => {
+        fetchPantryItems();
+    }, [currentPantryName]);
+
+    const fetchPantryItems = async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_BASE_URL}/api/pantry/${currentPantryName}/items`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch pantry items');
+            }
+
+            const data = await response.json();
+            setPantryItems(data);
+        } catch (error) {
+            console.error('Error fetching pantry items:', error);
+            setError(error.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleBackClick = () => {
         navigate('/dashboard');
     };
+
     const toggleSidebar = () => {
         setIsSidebarCollapsed(!isSidebarCollapsed);
-      };
-
-    // Find the current pantry and its items
-    const currentPantry = pantryList.find(pantry => pantry.name === currentPantryName);
-    const pantryItems = currentPantry ? currentPantry.items || [] : [];
-
-    const handleQuantityChange = (itemName, change) => {
-        // Backend call to update quantity  
-        console.log(`Update quantity for ${itemName} by ${change}`);
-       
     };
 
-    const handleAddItem = (newItem) => {
-        // Backend to add the new item to the pantry
-        console.log("Adding new item:", newItem);
-       
+    const handleQuantityChange = async (itemId, change) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_BASE_URL}/api/pantry/${currentPantryName}/item/${itemId}/quantity`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ change })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update item quantity');
+            }
+
+            // Refresh the pantry items after updating
+            fetchPantryItems();
+        } catch (error) {
+            console.error('Error updating item quantity:', error);
+            setError(error.message);
+        }
     };
+
+    const handleAddItem = async (newItem) => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_BASE_URL}/api/pantry/${currentPantryName}/item`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(newItem)
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to add new item');
+            }
+
+            // Refresh the pantry items after adding
+            fetchPantryItems();
+            setIsAddItemModalOpen(false);
+        } catch (error) {
+            console.error('Error adding new item:', error);
+            setError(error.message);
+        }
+    };
+
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+
+    if (error) {
+        return <div>Error: {error}</div>;
+    }
 
     return (
         <div className="flex h-screen bg-gray-100">
@@ -46,7 +117,6 @@ function PantryListPage({ pantryName: defaultPantryName }) {
               currentPantryName={currentPantryName} 
             />
             <div className="flex-1 flex flex-col overflow-hidden">
-                {/* Dashboard */}
                 <DashboardNavbar toggleSidebar={toggleSidebar} />
                 <main className="flex-1 p-6">
                     <div className="flex justify-between items-center mb-6">
@@ -60,7 +130,6 @@ function PantryListPage({ pantryName: defaultPantryName }) {
                         <div className="flex space-x-4">
                             <SearchBar 
                             placeholder={`Search ${currentPantryName} Items`}/>
-
                             <FilterButton 
                                 placeholder="Filter by category"
                             />
@@ -92,18 +161,18 @@ function PantryListPage({ pantryName: defaultPantryName }) {
                                         <td className="text-left p-3">{item.name}</td>
                                         <td className="text-left p-3">{item.category}</td>
                                         <td className="text-left p-3">{item.purchaseDate}</td>
-                                        <td className="text-left p-3">{item.expirationDate}</td>
+                                        <td className="text-left p-3">{item.expiryDate}</td>
                                         <td className="text-left p-3">
                                             <div className="flex items-center">
                                                 <button 
-                                                    onClick={() => handleQuantityChange(item.name, 1)}
+                                                    onClick={() => handleQuantityChange(item.id, 1)}
                                                     className="text-gray-600 hover:text-blue-600"
                                                 >
                                                     <MdOutlineKeyboardArrowUp size={24} />
                                                 </button>
                                                 <span className="mx-2">{item.quantity}</span>
                                                 <button 
-                                                    onClick={() => handleQuantityChange(item.name, -1)}
+                                                    onClick={() => handleQuantityChange(item.id, -1)}
                                                     className="text-gray-600 hover:text-blue-600"
                                                 >
                                                     <MdOutlineKeyboardArrowDown size={24} />
@@ -115,7 +184,6 @@ function PantryListPage({ pantryName: defaultPantryName }) {
                                                 <MdEdit size={18} />
                                             </button>
                                             <button className="text-red-600 hover:text-red-800">
-                                               
                                                 <MdDeleteOutline size={20}/>
                                             </button>
                                         </td>

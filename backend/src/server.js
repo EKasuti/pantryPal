@@ -2,7 +2,7 @@ console.log('Starting server.js');
 
 const express = require('express');
 const cors = require('cors');
-const { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry, getPantriesForUser } = require('./firebase/services');
+const { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry, getPantriesForUser, getPantryByNameAndUser, getItemsForPantry } = require('./firebase/services');
 const admin = require('firebase-admin');
 
 require('dotenv').config();
@@ -239,6 +239,25 @@ app.get('/api/pantry/list', authenticateUser, async (req, res) => {
   } catch (error) {
     console.error('Error fetching pantry list:', error);
     res.status(500).json({ message: 'Error fetching pantry list', error: error.toString() });
+  }
+});
+
+// GET route to retrieve items for a specific pantry
+app.get('/api/pantry/:pantryName/items', authenticateUser, async (req, res) => {
+  try {
+    const userId = req.user.uid;
+    const { pantryName } = req.params;
+    const pantry = await getPantryByNameAndUser(userId, pantryName);
+    
+    if (!pantry) {
+      return res.status(404).json({ message: 'Pantry not found' });
+    }
+
+    const items = await getItemsForPantry(pantry.id);
+    res.status(200).json(items);
+  } catch (error) {
+    console.error('Error fetching pantry items:', error);
+    res.status(500).json({ message: 'Error fetching pantry items', error: error.toString() });
   }
 });
 
