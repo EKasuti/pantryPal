@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import EmailModal from './EmailModal';
 
 function Navbar({ isWaitlist = false, activePage = 'home' }) {
   const [showModal, setShowModal] = useState(false);
+  const navigate = useNavigate();
 
   function handleWaitlistClick() {
     setShowModal(true);
@@ -42,8 +44,22 @@ function Navbar({ isWaitlist = false, activePage = 'home' }) {
           </li>
         ) : (
           <>
-            <li><button className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300">Sign Up</button></li>
-            <li><button className="bg-primary text-white px-4 py-2 rounded hover:bg-blue-800">Login</button></li>
+            <li>
+              <button
+                onClick={() => navigate('/signup')}
+                className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
+              >
+                Sign Up
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => navigate('/login')}
+                className="bg-primary text-white px-4 py-2 rounded hover:bg-blue-800"
+              >
+                Login
+              </button>
+            </li>
           </>
         )}
       </ul>

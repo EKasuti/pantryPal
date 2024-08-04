@@ -82,7 +82,7 @@ function LandingPage() {
 
   return (
     <div className="bg-white">
-      <Navbar isWaitlist={true} activePage={activePage}/>
+      <Navbar isWaitlist={false} activePage={activePage}/>
 
       <section id="home" className="p-20 flex justify-between">
         <div className="w-1/2 flex flex-col items-start mt-40 ">
