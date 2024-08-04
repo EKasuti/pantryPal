@@ -10,7 +10,7 @@ require('dotenv').config();
 const app = express();
 
 // Improved CORS configuration
-const allowedOrigins = ['https://pantry-pal-sooty.vercel.app', 'http://localhost:8000'];
+const allowedOrigins = ['https://pantry-pal-sooty.vercel.app', 'http://localhost:3000'];
 app.use(cors({
   origin: function(origin, callback){
     if(!origin) return callback(null, true);

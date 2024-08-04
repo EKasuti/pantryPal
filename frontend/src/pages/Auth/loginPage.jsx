@@ -2,19 +2,44 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import InputField from '../../components/Auth/InputField';
 import { IoMdClose } from 'react-icons/io';
+import { API_BASE_URL } from '../../config/api';
+
 
 function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Backend logic
-    console.log('Logged in with:', { email, password });
-   
-    navigate('/dashboard');
+    setError('');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Login failed');
+      }
+
+      const data = await response.json();
+      // Store the token in localStorage or a secure storage method
+      localStorage.setItem('token', data.token);
+      
+      // Redirect to dashboard
+      navigate('/dashboard');
+    } catch (error) {
+      setError(error.message);
+    }
   };
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center px-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8 relative">
@@ -29,6 +54,7 @@ function LoginPage() {
         <h2 className="text-2xl font-bold text-center mb-2">Login to your account</h2>
         <p className="text-center text-gray-600 mb-6">Effortlessly track your pantry</p>
         <form onSubmit={handleSubmit}>
+          {error && <p className="text-red-500 text-sm mb-4">{error}</p>}
           <InputField
             label="Email"
             type="email"
@@ -51,7 +77,7 @@ function LoginPage() {
             type="submit"
             className="w-full bg-primary text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
           >
-            Sign Up
+            Log In
           </button>
         </form>
         <p className="mt-4 text-center text-sm text-gray-600">
