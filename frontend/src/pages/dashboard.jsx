@@ -1,43 +1,68 @@
 import React, { useState, useEffect } from "react";
-
+import { API_BASE_URL } from "../config/api";
 import DashboardNavbar from "../components/Common/DashboardNavbar";
 import Sidebar from "../components/Common/SideBar";
 import SearchBar from "../components/Common/SearchBar";
 import CreatePantry from "../components/Create/CreatePantry";
 import PantryList from "../components/Common/PantryList";
 
-// Data
-import { pantryList } from "../data/PantryList";
-import { API_BASE_URL } from "../config/api";
-
 function Dashboard() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showCreatePantry, setShowCreatePantry] = useState(false);
-  const [pantries] = useState(pantryList);
+  const [pantries, setPantries] = useState([]);
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchUserData = async () => {
+    const fetchUserDataAndPantries = async () => {
       try {
         const token = localStorage.getItem('token');
-        const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
+        if (!token) {
+          throw new Error('No token found');
+        }
+
+        // Fetch user data
+        const userResponse = await fetch(`${API_BASE_URL}/api/user/profile`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
 
-        if (!response.ok) {
+        if (!userResponse.ok) {
           throw new Error('Failed to fetch user data');
         }
 
-        const userData = await response.json();
+        const userData = await userResponse.json();
         setUser(userData);
+
+        // Fetch pantry list
+        const pantriesResponse = await fetch(`${API_BASE_URL}/api/pantry/list`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        console.log('Pantries response:', pantriesResponse);
+
+        if (!pantriesResponse.ok) {
+          console.error('Pantries response not ok:', pantriesResponse.status, pantriesResponse.statusText);
+          const errorText = await pantriesResponse.text();
+          console.error('Error response text:', errorText);
+          throw new Error(`Failed to fetch pantry list: ${pantriesResponse.status} ${pantriesResponse.statusText}`);
+        }
+
+        const pantriesData = await pantriesResponse.json();
+        setPantries(pantriesData);
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        console.error('Error fetching data:', error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
       }
     };
 
-    fetchUserData();
+    fetchUserDataAndPantries();
   }, []);
 
   const toggleSidebar = () => {
@@ -47,6 +72,14 @@ function Dashboard() {
   const toggleCreatePantry = () => {
     setShowCreatePantry(!showCreatePantry);
   };
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error: {error}</div>;
+  }
 
   return (
     <div className="flex h-screen bg-gray-100">

@@ -154,4 +154,25 @@ async function addItemToPantry(pantryId, item) {
   }
 }
 
-module.exports = { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry };
+async function getPantriesForUser(userId) {
+  try {
+    const pantriesRef = admin.firestore().collection('pantries');
+    const snapshot = await pantriesRef.where('userId', '==', userId).get();
+
+    if (snapshot.empty) {
+      return [];
+    }
+
+    const pantries = [];
+    snapshot.forEach(doc => {
+      pantries.push({ id: doc.id, ...doc.data() });
+    });
+
+    return pantries;
+  } catch (error) {
+    console.error('Error getting pantries for user:', error);
+    throw error;
+  }
+}
+
+module.exports = { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry, getPantriesForUser };

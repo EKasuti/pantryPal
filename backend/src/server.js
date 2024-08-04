@@ -230,6 +230,21 @@ app.get('/api/user/profile', authenticateUser, async (req, res) => {
   }
 });
 
+// GET route to retrieve pantry list for a user
+app.get('/api/pantry/list', authenticateUser, async (req, res) => {
+  try {
+    const userId = req.user.uid;
+    
+    // Assuming you have a function to get pantries for a user
+    const pantries = await getPantriesForUser(userId);
+    
+    res.status(200).json(pantries);
+  } catch (error) {
+    console.error('Error fetching pantry list:', error);
+    res.status(500).json({ message: 'Error fetching pantry list', error: error.toString() });
+  }
+});
+
 module.exports = app;
 
 // Add these lines at the end of the file
