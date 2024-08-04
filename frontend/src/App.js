@@ -1,8 +1,8 @@
 import './App.css';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LandingPage from './pages/landingPage';
-import LoginPage from './pages/Auth/loginPage';
 import SignupPage from './pages/Auth/signupPage';
+import LoginPage from './pages/Auth/loginPage';
 
 function App() {
   return (

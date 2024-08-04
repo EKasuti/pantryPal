@@ -2,7 +2,7 @@ console.log('Starting server.js');
 
 const express = require('express');
 const cors = require('cors');
-const { addEmailToWaitlist, getAllWaitlistEntries } = require('./firebase/services');
+const { addEmailToWaitlist, getAllWaitlistEntries, signUpUser, loginUser } = require('./firebase/services');
 
 require('dotenv').config();
 
@@ -39,6 +39,17 @@ app.get('/test', (req, res) => {
   res.json({ message: 'Test endpoint working' });
 });
 
+// Firebase connection test route
+app.get('/test-firebase', async (req, res) => {
+  try {
+    const db = require('./firebase/config').db;
+    await db.collection('test').doc('test').set({ test: 'test' });
+    res.status(200).json({ message: 'Firebase connection successful' });
+  } catch (error) {
+    res.status(500).json({ message: 'Firebase connection failed', error: error.message });
+  }
+});
+
 // POST route to add an email to the waitlist
 app.post('/api/waitlist/join', async (req, res) => {
   const { email } = req.body;
@@ -65,7 +76,7 @@ app.post('/api/waitlist/join', async (req, res) => {
   }
 });
 
-// GET route to retrieve all waitlist entries (for admin purposes)
+// GET route to retrieve all waitlist entries 
 app.get('/api/waitlist/list', async (req, res) => {
   try {
     const waitlist = await getAllWaitlistEntries();
@@ -76,14 +87,45 @@ app.get('/api/waitlist/list', async (req, res) => {
   }
 });
 
-// Firebase connection test route
-app.get('/test-firebase', async (req, res) => {
+// Signup route
+app.post('/api/auth/signup', async (req, res) => {
+  const { email, password, name } = req.body;
+  
+  if (!email || !password || !name) {
+    return res.status(400).json({ message: 'Email, password, and name are required' });
+  }
+
   try {
-    const db = require('./firebase/config').db;
-    await db.collection('test').doc('test').set({ test: 'test' });
-    res.status(200).json({ message: 'Firebase connection successful' });
+    const result = await signUpUser(email, password, name);
+    if (result.success) {
+      res.status(201).json({ message: 'User created successfully', userId: result.userId });
+    } else {
+      res.status(400).json({ message: 'Signup failed', error: result.error });
+    }
   } catch (error) {
-    res.status(500).json({ message: 'Firebase connection failed', error: error.message });
+    console.error('Server error during signup:', error);
+    res.status(500).json({ message: 'Server error', error: error.toString() });
+  }
+});
+
+// Login route
+app.post('/api/auth/login', async (req, res) => {
+  const { email, password } = req.body;
+  
+  if (!email || !password) {
+    return res.status(400).json({ message: 'Email and password are required' });
+  }
+
+  try {
+    const result = await loginUser(email, password);
+    if (result.success) {
+      res.status(200).json({ message: 'Login successful', userId: result.userId, token: result.token });
+    } else {
+      res.status(401).json({ message: 'Login failed', error: result.error });
+    }
+  } catch (error) {
+    console.error('Server error during login:', error);
+    res.status(500).json({ message: 'Server error', error: error.toString() });
   }
 });
 
