@@ -36,16 +36,25 @@ app.get('/', (req, res) => {
     res.send('Welcome to the PantryPal API');
 });
 
+// Test route
+app.get('/test', (req, res) => {
+  res.json({ message: 'Test endpoint working' });
+});
+
 // POST route to add an email to the waitlist
 app.post('/api/waitlist/join', async (req, res) => {
+  console.log('Received request to join waitlist');
   const { email } = req.body;
   
   if (!email) {
+    console.log('Email is missing in the request');
     return res.status(400).json({ message: 'Email is required' });
   }
 
   try {
+    console.log('Attempting to add email:', email);
     const result = await addEmailToWaitlist(email);
+    console.log('Result from addEmailToWaitlist:', result);
     if (result.success) {
       res.status(200).json({ message: 'Email added to waitlist successfully', id: result.id });
     } else if (result.error === 'Email already exists in the waitlist') {
@@ -56,7 +65,7 @@ app.post('/api/waitlist/join', async (req, res) => {
     }
   } catch (error) {
     console.error('Server error:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: 'Server error', error: error.toString() });
   }
 });
 
