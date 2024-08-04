@@ -30,7 +30,7 @@ function Dashboard() {
         });
 
         if (!userResponse.ok) {
-          throw new Error('Failed to fetch user data');
+          throw new Error(`Failed to fetch user data: ${userResponse.status} ${userResponse.statusText}`);
         }
 
         const userData = await userResponse.json();

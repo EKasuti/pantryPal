@@ -2,7 +2,7 @@ console.log('Starting server.js');
 
 const express = require('express');
 const cors = require('cors');
-const { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry } = require('./firebase/services');
+const { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry, getPantriesForUser } = require('./firebase/services');
 const admin = require('firebase-admin');
 
 require('dotenv').config();
@@ -234,10 +234,7 @@ app.get('/api/user/profile', authenticateUser, async (req, res) => {
 app.get('/api/pantry/list', authenticateUser, async (req, res) => {
   try {
     const userId = req.user.uid;
-    
-    // Assuming you have a function to get pantries for a user
     const pantries = await getPantriesForUser(userId);
-    
     res.status(200).json(pantries);
   } catch (error) {
     console.error('Error fetching pantry list:', error);

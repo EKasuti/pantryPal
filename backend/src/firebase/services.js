@@ -156,7 +156,7 @@ async function addItemToPantry(pantryId, item) {
 
 async function getPantriesForUser(userId) {
   try {
-    const pantriesRef = admin.firestore().collection('pantries');
+    const pantriesRef = db.collection('pantries');
     const snapshot = await pantriesRef.where('userId', '==', userId).get();
 
     if (snapshot.empty) {
