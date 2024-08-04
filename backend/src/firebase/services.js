@@ -1,6 +1,4 @@
 const { db } = require('./config');
-const { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } = require('firebase/auth');
-const auth = getAuth();
 
 const addEmailToWaitlist = async (email) => {
   try {
@@ -39,35 +37,4 @@ const getAllWaitlistEntries = async () => {
   }
 };
 
-async function signUpUser(email, password, name) {
-  try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-    
-    // Add user to users collection
-    await db.collection('users').doc(user.uid).set({
-      name: name,
-      email: email
-    });
-
-    return { success: true, userId: user.uid };
-  } catch (error) {
-    console.error('Error signing up user:', error);
-    return { success: false, error: error.message };
-  }
-}
-
-async function loginUser(email, password) {
-  try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
-    const user = userCredential.user;
-    const token = await user.getIdToken();
-
-    return { success: true, userId: user.uid, token: token };
-  } catch (error) {
-    console.error('Error logging in user:', error);
-    return { success: false, error: error.message };
-  }
-}
-
-module.exports = { addEmailToWaitlist, getAllWaitlistEntries, signUpUser, loginUser };
+module.exports = { addEmailToWaitlist, getAllWaitlistEntries };
