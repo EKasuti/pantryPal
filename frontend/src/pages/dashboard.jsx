@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 import DashboardNavbar from "../components/Common/DashboardNavbar";
 import Sidebar from "../components/Common/SideBar";
@@ -8,11 +8,37 @@ import PantryList from "../components/Common/PantryList";
 
 // Data
 import { pantryList } from "../data/PantryList";
+import { API_BASE_URL } from "../config/api";
 
 function Dashboard() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [showCreatePantry, setShowCreatePantry] = useState(false);
   const [pantries] = useState(pantryList);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch user data');
+        }
+
+        const userData = await response.json();
+        setUser(userData);
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   const toggleSidebar = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
@@ -29,7 +55,11 @@ function Dashboard() {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Dashboard */}
-        <DashboardNavbar toggleSidebar={toggleSidebar} />
+        <DashboardNavbar 
+          toggleSidebar={toggleSidebar} 
+          isSidebarCollapsed={isSidebarCollapsed}
+          userName={user ? user.name : ''}
+        />
 
         <main className="flex-1 flex flex-col overflow-x-hidden overflow-y-auto bg-gray-100">
           <div className="px-4 py-8 bg-background">

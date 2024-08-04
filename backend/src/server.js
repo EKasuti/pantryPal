@@ -10,7 +10,7 @@ require('dotenv').config();
 const app = express();
 
 // Improved CORS configuration
-const allowedOrigins = ['https://pantry-pal-sooty.vercel.app', 'http://localhost:3000'];
+const allowedOrigins = ['https://pantry-pal-sooty.vercel.app', 'http://localhost:8000', 'http://localhost:3000'];
 app.use(cors({
   origin: function(origin, callback){
     if(!origin) return callback(null, true);
@@ -208,6 +208,26 @@ app.post('/api/pantry/:pantryId/item', authenticateUser, async (req, res) => {
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
   res.status(500).json({ message: 'Internal server error', error: err.message });
+});
+
+// GET route for user profile
+app.get('/api/user/profile', authenticateUser, async (req, res) => {
+  try {
+    // req.user should be set by the authenticateUser middleware
+    const userId = req.user.uid;
+    
+    // For testing, you can just send back a dummy user object
+    const userData = {
+      id: userId,
+      name: 'Test User',
+      email: 'testuser@example.com'
+    };
+    
+    res.status(200).json(userData);
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    res.status(500).json({ message: 'Error fetching user profile', error: error.toString() });
+  }
 });
 
 module.exports = app;
