@@ -9,13 +9,27 @@ console.log('Environment variables loaded');
 
 const app = express();
 
+// Improved CORS configuration
+const allowedOrigins = ['https://pantry-pal-sooty.vercel.app', 'http://localhost:3000'];
+app.use(cors({
+  origin: function(origin, callback){
+    if(!origin) return callback(null, true);
+    if(allowedOrigins.indexOf(origin) === -1){
+      var msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true
+}));
+
+app.use(express.json());
+
+// Logging middleware
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
   next();
 });
-
-app.use(cors());
-app.use(express.json());
 
 // Welcome route
 app.get('/', (req, res) => {
@@ -37,6 +51,7 @@ app.post('/api/waitlist/join', async (req, res) => {
     } else if (result.error === 'Email already exists in the waitlist') {
       res.status(409).json({ message: 'Email already exists in the waitlist' });
     } else {
+      console.error('Failed to add email:', result.error);
       res.status(500).json({ message: 'Failed to add email to waitlist', error: result.error });
     }
   } catch (error) {
@@ -53,6 +68,18 @@ app.get('/api/waitlist/list', async (req, res) => {
   } catch (error) {
     console.error('Error fetching waitlist:', error);
     res.status(500).json({ message: 'Error fetching waitlist', error: error.message });
+  }
+});
+
+// Firebase connection test route
+app.get('/test-firebase', async (req, res) => {
+  try {
+    const db = require('./firebase/config').db;
+    await db.collection('test').doc('test').set({ test: 'test' });
+    res.status(200).json({ message: 'Firebase connection successful' });
+  } catch (error) {
+    console.error('Firebase connection error:', error);
+    res.status(500).json({ message: 'Firebase connection failed', error: error.message });
   }
 });
 
