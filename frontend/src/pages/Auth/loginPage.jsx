@@ -13,7 +13,7 @@ function LoginPage() {
     // Backend logic
     console.log('Logged in with:', { email, password });
    
-    // navigate('/dashboard');
+    navigate('/dashboard');
   };
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center px-4">

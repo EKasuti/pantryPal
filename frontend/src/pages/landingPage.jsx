@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import Navbar from "../components/Navbar";
+import Navbar from "../components/Common/Navbar";
 import { featuresData } from "../data/Features";
 import FeatureCard from "../components/FeaturesCard";
 import landingPageImage from "../images/landing_page_image.png";
 import recipeImage from "../images/recipe.png";
-import Footer from "../components/Footer";
-import EmailModal from "../components/EmailModal";
+import Footer from "../components/Common/Footer";
+import EmailModal from "../components/Waitlist/EmailModal";
 import { API_BASE_URL } from '../config/api';
 
 function LandingPage() {

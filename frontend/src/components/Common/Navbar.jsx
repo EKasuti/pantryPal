@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import EmailModal from './EmailModal';
+import EmailModal from '../Waitlist/EmailModal';
 
 function Navbar({ isWaitlist = false, activePage = 'home' }) {
   const [showModal, setShowModal] = useState(false);

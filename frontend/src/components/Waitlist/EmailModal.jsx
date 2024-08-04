@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { validateEmail } from '../utils/helper';
-import { API_BASE_URL } from '../config/api';
+import { validateEmail } from '../../utils/helper';
+import { API_BASE_URL } from '../../config/api';
 
 function EmailModal({ isOpen, onClose }) {
   const [email, setEmail] = useState('');
