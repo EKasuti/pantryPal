@@ -1,14 +1,14 @@
-const admin = require('firebase-admin');
+const { initializeApp } = require('firebase/app');
+const { getFirestore } = require('firebase/firestore');
 require('dotenv').config();
 
-const serviceAccount = {
+const firebaseConfig = {
   project_id: process.env.FIREBASE_PROJECT_ID,
   client_email: process.env.FIREBASE_CLIENT_EMAIL,
   private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
 };
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-module.exports = admin;
+module.exports = { app, db };
