@@ -84,34 +84,33 @@ function LandingPage() {
     <div className="bg-white">
       <Navbar isWaitlist={false} activePage={activePage}/>
 
-      <section id="home" className="p-20 flex justify-between">
-        <div className="w-1/2 flex flex-col items-start mt-40 ">
-          <h1 className="text-4xl font-bold mb-8 ">
+      <section id="home" className="p-4 sm:p-8 md:p-20 flex flex-col md:flex-row justify-between items-center">
+        <div className="w-full md:w-1/2 flex flex-col items-center md:items-start mt-20 md:mt-40">
+          <h1 className="text-3xl md:text-4xl font-bold mb-4 md:mb-8 text-center md:text-left">
             Effortlessly Track Your Pantry
           </h1>
-          <h2 className="text-3xl mb-8">
+          <h2 className="text-2xl md:text-3xl mb-4 md:mb-8 text-center md:text-left">
             <span className="text-primary font-bold">Organize</span> Your
             Kitchen with Ease.
           </h2>
-          <p className="mb-8 text-lg text-left">
-            Keep track of your pantry items, reduce waste, and save money.{" "}
-            <br />
+          <p className="mb-6 md:mb-8 text-base md:text-lg text-center md:text-left">
+            Keep track of your pantry items, reduce waste, and save money.
             Get timely reminders for expiring items and generate custom shopping
-            lists to avoid unnecessary purchases. <br />
+            lists to avoid unnecessary purchases.
             Stay organized and make the most of your pantry with Pantry Pal.
           </p>
           <button
             onClick={handleOpenModal}
-            className="bg-primary text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-blue-800"
+            className="bg-primary text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-blue-800 w-full md:w-auto"
           >
             Get Started
           </button>
         </div>
-        <div className="w-2/5 flex justify-center">
+        <div className="w-full md:w-2/5 flex justify-center mt-8 md:mt-0">
           <img
             src={landingPageImage}
             alt="Pantry items"
-            className="w-4/5 object-contain"
+            className="w-4/5 md:w-full object-contain"
           />
         </div>
       </section>
