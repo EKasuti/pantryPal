@@ -13,6 +13,7 @@ function Dashboard() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [filteredItems, setFilteredItems] = useState([]);
 
   useEffect(() => {
     const fetchUserDataAndPantries = async () => {
@@ -54,6 +55,7 @@ function Dashboard() {
 
         const pantriesData = await pantriesResponse.json();
         setPantries(pantriesData);
+        setFilteredItems(pantriesData);
       } catch (error) {
         console.error('Error fetching data:', error);
         setError(error.message);
@@ -76,11 +78,20 @@ function Dashboard() {
   const handlePantryCreated = (newPantry) => {
     console.log('New pantry created:', newPantry);
     setPantries(prevPantries => [...prevPantries, newPantry]);
+    setFilteredItems(prevFilteredItems => [...prevFilteredItems, newPantry]);
   };
 
   const handlePantryDeleted = (deletedPantryId) => {
     console.log('Deleting pantry with ID:', deletedPantryId);
     setPantries(prevPantries => prevPantries.filter(pantry => pantry.id !== deletedPantryId));
+    setFilteredItems(prevFilteredItems => prevFilteredItems.filter(pantry => pantry.id !== deletedPantryId));
+  };
+
+  const handleSearch = (searchTerm) => {
+    const filtered = pantries.filter(item => 
+      item.name.toLowerCase().startsWith(searchTerm.toLowerCase())
+    );
+    setFilteredItems(filtered);
   };
 
   if (loading) {
@@ -108,7 +119,7 @@ function Dashboard() {
           <div className="px-4 py-8 bg-background">
             <div className="flex justify-between items-center">
               <div className="w-1/2">
-                <SearchBar placeholder="Search Pantry list" />
+                <SearchBar placeholder="Search Pantry list" onSearch={handleSearch} />
               </div>
               <button
                 onClick={toggleCreatePantry}
@@ -126,7 +137,7 @@ function Dashboard() {
           </div>
 
           <div className="flex-grow bg-white rounded-tl-lg rounded-tr-lg p-6">
-            <PantryList pantries={pantries} onPantryDeleted={handlePantryDeleted} />
+            <PantryList pantries={filteredItems} onPantryDeleted={handlePantryDeleted} />
           </div>
         </main>
       </div>

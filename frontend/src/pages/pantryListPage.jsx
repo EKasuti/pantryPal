@@ -17,6 +17,7 @@ function PantryListPage({ pantryName: defaultPantryName }) {
     const [pantryItems, setPantryItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [filteredPantryItems, setFilteredPantryItems] = useState([]);
     const { pantryName: urlPantryName } = useParams();
     const currentPantryName = (urlPantryName || defaultPantryName || "Pantry 01").trim();
     const navigate = useNavigate();
@@ -223,6 +224,17 @@ function PantryListPage({ pantryName: defaultPantryName }) {
         }
     };
 
+    const handleSearch = (searchTerm) => {
+        const filtered = pantryItems.filter(item => 
+            item.name.toLowerCase().startsWith(searchTerm.toLowerCase())
+        );
+        setFilteredPantryItems(filtered);
+    };
+
+    useEffect(() => {
+        setFilteredPantryItems(pantryItems);
+    }, [pantryItems]);
+
     if (loading) return <div>Loading...</div>;
     if (error) return <div>Error: {error}</div>;
 
@@ -245,7 +257,10 @@ function PantryListPage({ pantryName: defaultPantryName }) {
                             <span>Back</span>
                         </button>
                         <div className="flex space-x-4">
-                            <SearchBar placeholder={`Search ${currentPantryName} Items`}/>
+                            <SearchBar 
+                                placeholder={`Search ${currentPantryName} Items`}
+                                onSearch={handleSearch}
+                            />
                             <FilterButton placeholder="Filter by category" />
                             <button 
                                 className="bg-primary text-white px-4 py-2 rounded-md"
@@ -268,8 +283,8 @@ function PantryListPage({ pantryName: defaultPantryName }) {
                             </tr>
                         </thead>
                         <tbody>
-                            {pantryItems.length > 0 ? (
-                                pantryItems.map((item) => (
+                            {filteredPantryItems.length > 0 ? (
+                                filteredPantryItems.map((item) => (
                                     <tr key={item.id} className="border-b">
                                         <td className="p-3">{item.numericId}</td>
                                         <td className="text-left p-3">{item.name}</td>
@@ -316,7 +331,7 @@ function PantryListPage({ pantryName: defaultPantryName }) {
                             ) : (
                                 <tr>
                                     <td colSpan="7" className="text-center p-4">
-                                        No items in this pantry.
+                                        No items found in this pantry.
                                     </td>
                                 </tr>
                             )}
