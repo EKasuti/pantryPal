@@ -96,6 +96,7 @@ async function createPantry(userId, name) {
       name: name,
       userId: userId,
       categories: 0,
+      items: 0,  
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     });

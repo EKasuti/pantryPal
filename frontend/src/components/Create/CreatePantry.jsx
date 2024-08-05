@@ -31,9 +31,11 @@ function CreatePantry({ onClose, onPantryCreated }) {
       const data = await response.json();
       console.log("Pantry created:", data);
       
-      // Call the onPantryCreated callback if provided
-      if (onPantryCreated) {
+      // Call onPantryCreated only if it's a function
+      if (typeof onPantryCreated === 'function') {
         onPantryCreated(data.pantry);
+      } else {
+        console.error('onPantryCreated is not a function');
       }
 
       onClose();

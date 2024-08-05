@@ -32,7 +32,15 @@ function PantryList({ pantries, onPantryDeleted }) {
         }
 
         const data = await response.json();
-        onPantryDeleted(pantryId);
+        console.log('Deletion successful:', data);
+        
+        // Call onPantryDeleted only if it's a function
+        if (typeof onPantryDeleted === 'function') {
+          onPantryDeleted(pantryId);
+        } else {
+          console.error('onPantryDeleted is not a function');
+        }
+        
         setError(null);
       } catch (error) {
         console.error('Error deleting pantry:', error);

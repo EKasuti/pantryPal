@@ -280,7 +280,6 @@ app.get('/api/pantry/:pantryName/items', authenticateUser, async (req, res) => {
 });
 
 module.exports = app;
-
 // Add these lines at the end of the file
 const PORT = process.env.PORT || 8000;
 app.listen(PORT, () => {

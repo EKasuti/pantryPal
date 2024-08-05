@@ -73,6 +73,16 @@ function Dashboard() {
     setShowCreatePantry(!showCreatePantry);
   };
 
+  const handlePantryCreated = (newPantry) => {
+    console.log('New pantry created:', newPantry);
+    setPantries(prevPantries => [...prevPantries, newPantry]);
+  };
+
+  const handlePantryDeleted = (deletedPantryId) => {
+    console.log('Deleting pantry with ID:', deletedPantryId);
+    setPantries(prevPantries => prevPantries.filter(pantry => pantry.id !== deletedPantryId));
+  };
+
   if (loading) {
     return <div>Loading...</div>;
   }
@@ -107,11 +117,16 @@ function Dashboard() {
                 + Pantry
               </button>
             </div>
-            {showCreatePantry && <CreatePantry onClose={toggleCreatePantry} />}
+            {showCreatePantry && (
+              <CreatePantry 
+                onClose={toggleCreatePantry} 
+                onPantryCreated={handlePantryCreated}
+              />
+            )}
           </div>
 
           <div className="flex-grow bg-white rounded-tl-lg rounded-tr-lg p-6">
-            <PantryList pantries={pantries} />
+            <PantryList pantries={pantries} onPantryDeleted={handlePantryDeleted} />
           </div>
         </main>
       </div>
