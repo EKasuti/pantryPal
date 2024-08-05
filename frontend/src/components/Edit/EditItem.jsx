@@ -4,6 +4,7 @@ import { MdOutlineKeyboardArrowUp, MdOutlineKeyboardArrowDown, MdClose } from "r
 
 function EditItems({ item, onClose, onEditItem }) {
     const [editedItem, setEditedItem] = useState({
+        id: '',
         name: '',
         category: '',
         quantity: 0,
@@ -12,6 +13,7 @@ function EditItems({ item, onClose, onEditItem }) {
     });
 
     useEffect(() => {
+        console.log("Item received in EditItems:", item);
         setEditedItem({
             id: item.id,
             name: item.name || '',
@@ -23,8 +25,11 @@ function EditItems({ item, onClose, onEditItem }) {
     }, [item]);
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setEditedItem(prev => ({ ...prev, [name]: value }));
+        const { id, value } = e.target;
+        setEditedItem(prev => ({
+            ...prev,
+            [id]: value
+        }));
     };
 
     const handleQuantityChange = (change) => {
@@ -36,12 +41,13 @@ function EditItems({ item, onClose, onEditItem }) {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        console.log("Submitting edited item:", editedItem); // Add this line for debugging
         onEditItem({
             ...editedItem,
             quantity: Number(editedItem.quantity)
         });
     };
+
+    console.log("Current editedItem state:", editedItem);
 
     return (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
@@ -57,26 +63,34 @@ function EditItems({ item, onClose, onEditItem }) {
                 <form onSubmit={handleSubmit}>
                     <InputField
                         label="Item Name"   
-                        name="name"
+                        type="text"
+                        id="name"
                         value={editedItem.name}
                         onChange={handleChange}
-                        required
+                        required={true}
+                        placeholder="Enter item name"
                     />
                     <InputField
                         label="Category"
-                        name="category"
+                        type="text"
+                        id="category"
                         value={editedItem.category}
                         onChange={handleChange}
-                        required
+                        required={true}
+                        placeholder="Enter category"
                     />
                     <div className="mb-4">
-                        <div className="flex justify-between items-center">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Quantity
+                        </label>
+                        <div className="flex items-center">
                             <InputField
-                                label="Quantity"
-                                name="quantity"
+                                type="number"
+                                id="quantity"
                                 value={editedItem.quantity}
                                 onChange={handleChange}
-                                required
+                                required={true}
+                                placeholder="Enter quantity"
                             />
                             <div className="flex flex-col ml-2">
                                 <button 
@@ -100,20 +114,20 @@ function EditItems({ item, onClose, onEditItem }) {
                     <InputField
                         type="date"
                         label="Purchase Date"
-                        name="purchaseDate"
+                        id="purchaseDate"
                         value={editedItem.purchaseDate}
                         onChange={handleChange}
                     />
                     <InputField
                         type="date"
                         label="Expiry Date"
-                        name="expiryDate"
+                        id="expiryDate"
                         value={editedItem.expiryDate}
                         onChange={handleChange}
                     />  
                     <button
                         type="submit"
-                        className="w-full px-4 py-2 bg-primary text-white rounded-md hover:bg-blue-600"
+                        className="w-full px-4 py-2 bg-primary text-white rounded-md"
                     >
                         Save Changes
                     </button>

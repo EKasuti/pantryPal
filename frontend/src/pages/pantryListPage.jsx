@@ -34,7 +34,6 @@ function PantryListPage({ pantryName: defaultPantryName }) {
             const userData = await response.json();
             setUser(userData);
         } catch (error) {
-            console.error('Error fetching user data:', error);
             setError(error.message);
         }
     }, []);
@@ -65,7 +64,6 @@ function PantryListPage({ pantryName: defaultPantryName }) {
             const data = await response.json();
             setPantryItems(data.map((item, index) => ({ ...item, numericId: index + 1 })));
         } catch (error) {
-            console.error('Error fetching pantry items:', error);
             setError(error.message);
         } finally {
             setLoading(false);
@@ -83,7 +81,20 @@ function PantryListPage({ pantryName: defaultPantryName }) {
             const currentItem = pantryItems.find(item => item.id === itemId);
             const newQuantity = Math.max(0, currentItem.quantity + change);
 
-            const response = await fetch(`${API_BASE_URL}/api/pantry/${currentPantryName}/item/${itemId}`, {
+            // Find the current pantry
+            const pantryResponse = await fetch(`${API_BASE_URL}/api/pantry/list`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!pantryResponse.ok) throw new Error('Failed to fetch pantries');
+
+            const pantries = await pantryResponse.json();
+            const currentPantry = pantries.find(p => p.name === currentPantryName);
+
+            if (!currentPantry) throw new Error('Pantry not found');
+
+            // Update the item in the backend
+            const response = await fetch(`${API_BASE_URL}/api/pantry/${currentPantry.id}/item/${itemId}`, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -94,13 +105,13 @@ function PantryListPage({ pantryName: defaultPantryName }) {
 
             if (!response.ok) throw new Error('Failed to update item quantity');
 
+            // Update local state
             setPantryItems(prevItems => 
                 prevItems.map(item => 
                     item.id === itemId ? { ...item, quantity: newQuantity } : item
                 )
             );
         } catch (error) {
-            console.error('Error updating item quantity:', error);
             setError(error.message);
         }
     };
@@ -142,14 +153,12 @@ function PantryListPage({ pantryName: defaultPantryName }) {
             setIsAddItemModalOpen(false);
             await fetchPantryItems(); // Refresh the items after adding a new one
         } catch (error) {
-            console.error('Error adding new item:', error);
             setError(error.message);
         }
     };
 
     const handleEditItem = async (updatedItem) => {
         try {
-            console.log("Handling edit item:", updatedItem); // Add this line for debugging
             const token = localStorage.getItem('token');
             const pantryResponse = await fetch(`${API_BASE_URL}/api/pantry/list`, {
                 headers: { 'Authorization': `Bearer ${token}` }
@@ -185,7 +194,6 @@ function PantryListPage({ pantryName: defaultPantryName }) {
             setEditingItem(null);
             await fetchPantryItems(); // Refresh the items after editing an item
         } catch (error) {
-            console.error('Error updating item:', error);
             setError(error.message);
         }
     };
@@ -220,7 +228,6 @@ function PantryListPage({ pantryName: defaultPantryName }) {
 
             await fetchPantryItems(); // Refresh the items after deleting an item
         } catch (error) {
-            console.error('Error deleting item:', error);
             setError(error.message);
         }
     };
