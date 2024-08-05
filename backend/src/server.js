@@ -184,7 +184,7 @@ app.post('/api/pantry/:pantryId/item', authenticateUser, async (req, res) => {
   const { pantryId } = req.params;
   const { name, category, quantity, purchaseDate, expiryDate } = req.body;
 
-  if (!name || !category || !quantity) {
+  if (!name || !quantity) {
     return res.status(400).json({ message: 'Name, category, and quantity are required' });
   }
 
