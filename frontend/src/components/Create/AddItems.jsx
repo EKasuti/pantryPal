@@ -37,22 +37,22 @@ function AddItems({ pantryName, onClose, onAddItem }) {
 
            {/* Purchase Date */}
             <InputField
-                label="Purchase Date"
+                label="Purchase Date (optional)"
                 type="date"
                 id="purchaseDate"
                 value={purchaseDate}
                 onChange={(e) => setPurchaseDate(e.target.value)}
-                required={true}
+                required={false}
             />
 
             {/* Expiry Date */}
             <InputField
-                label="Expiry Date"
+                label="Expiry Date (optional)"
                 type="date"
                 id="expiryDate"
                 value={expiryDate}
                 onChange={(e) => setExpiryDate(e.target.value)}
-                required={true}
+                required={false}
                 />
             <div className="flex mb-4">
               <InputField

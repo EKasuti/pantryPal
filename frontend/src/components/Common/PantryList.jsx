@@ -75,7 +75,7 @@ function PantryList({ pantries, onPantryDeleted }) {
             </div>
             <div className="flex justify-between">
               <span>Items:</span>
-              <span>{pantry.quantity}</span>
+              <span>{pantry.items}</span>
             </div>
           </div>
           <div className="flex justify-end space-x-1">

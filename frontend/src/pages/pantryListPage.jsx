@@ -12,7 +12,6 @@ function PantryListPage({ pantryName: defaultPantryName }) {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
     const [pantryItems, setPantryItems] = useState([]);
-    const [itemIdMap, setItemIdMap] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const { pantryName: urlPantryName } = useParams();
@@ -37,47 +36,12 @@ function PantryListPage({ pantryName: defaultPantryName }) {
             }
 
             const data = await response.json();
-            const itemsWithSequentialIds = data.map((item, index) => ({
-                ...item,
-                sequentialId: index + 1
-            }));
-            setPantryItems(itemsWithSequentialIds);
-
-            const newItemIdMap = {};
-            itemsWithSequentialIds.forEach(item => {
-                newItemIdMap[item.sequentialId] = item.id;
-            });
-            setItemIdMap(newItemIdMap);
+            setPantryItems(data);
         } catch (error) {
             console.error('Error fetching pantry items:', error);
             setError(error.message);
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleQuantityChange = async (sequentialId, change) => {
-        const originalId = itemIdMap[sequentialId];
-        try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${API_BASE_URL}/api/pantry/${currentPantryName}/item/${originalId}/quantity`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ change })
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to update item quantity');
-            }
-
-            // Refresh the pantry items after updating
-            fetchPantryItems();
-        } catch (error) {
-            console.error('Error updating item quantity:', error);
-            setError(error.message);
         }
     };
 
@@ -89,14 +53,65 @@ function PantryListPage({ pantryName: defaultPantryName }) {
         setIsSidebarCollapsed(!isSidebarCollapsed);
     };
 
-    const handleAddItem = async (newItem) => {
+    const handleQuantityChange = async (itemId, change) => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`${API_BASE_URL}/api/pantry/${currentPantryName}/item`, {
-                method: 'POST',
+            const currentItem = pantryItems.find(item => item.id === itemId);
+            const newQuantity = Math.max(0, currentItem.quantity + change); // Ensure quantity doesn't go below 0
+
+            const response = await fetch(`${API_BASE_URL}/api/pantry/${currentPantryName}/item/${itemId}`, {
+                method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ quantity: newQuantity })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to update item quantity');
+            }
+
+            // Update the local state
+            setPantryItems(prevItems => 
+                prevItems.map(item => 
+                    item.id === itemId ? { ...item, quantity: newQuantity } : item
+                )
+            );
+        } catch (error) {
+            console.error('Error updating item quantity:', error);
+            setError(error.message);
+        }
+    };
+
+    const handleAddItem = async (newItem) => {
+        try {
+            const token = localStorage.getItem('token');
+            
+            // First, get the pantry ID using the pantry name
+            const pantryResponse = await fetch(`${API_BASE_URL}/api/pantry/list`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!pantryResponse.ok) {
+                throw new Error('Failed to fetch pantries');
+            }
+
+            const pantries = await pantryResponse.json();
+            const currentPantry = pantries.find(p => p.name === currentPantryName);
+
+            if (!currentPantry) {
+                throw new Error('Pantry not found');
+            }
+
+            // Now use the pantry ID to add the item
+            const response = await fetch(`${API_BASE_URL}/api/pantry/${currentPantry.id}/item`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify(newItem)
             });
@@ -105,8 +120,13 @@ function PantryListPage({ pantryName: defaultPantryName }) {
                 throw new Error('Failed to add new item');
             }
 
-            // Refresh the pantry items after adding
-            fetchPantryItems();
+            const addedItem = await response.json();
+            console.log('New item added:', addedItem);
+
+            // Update the items state with the new item
+            setPantryItems(prevItems => [...prevItems, addedItem.item]);
+
+            // Close the modal
             setIsAddItemModalOpen(false);
         } catch (error) {
             console.error('Error adding new item:', error);
@@ -168,8 +188,8 @@ function PantryListPage({ pantryName: defaultPantryName }) {
                         <tbody>
                             {pantryItems.length > 0 ? (
                                 pantryItems.map((item) => (
-                                    <tr key={item.sequentialId} className="border-b">
-                                         <td className="p-3">{item.sequentialId}</td>
+                                    <tr key={item.id} className="border-b">
+                                         <td className="p-3">{item.id}</td>
                                         <td className="text-left p-3">{item.name}</td>
                                         <td className="text-left p-3">{item.category}</td>
                                         <td className="text-left p-3">{item.purchaseDate}</td>
@@ -177,15 +197,16 @@ function PantryListPage({ pantryName: defaultPantryName }) {
                                         <td className="text-left p-3">
                                             <div className="flex items-center">
                                                 <button 
-                                                    onClick={() => handleQuantityChange(item.sequentialId, 1)}
+                                                    onClick={() => handleQuantityChange(item.id, 1)}
                                                     className="text-gray-600 hover:text-blue-600"
                                                 >
                                                     <MdOutlineKeyboardArrowUp size={24} />
                                                 </button>
                                                 <span className="mx-2">{item.quantity}</span>
                                                 <button 
-                                                    onClick={() => handleQuantityChange(item.sequentialId, -1)}
+                                                    onClick={() => handleQuantityChange(item.id, -1)}
                                                     className="text-gray-600 hover:text-blue-600"
+                                                    disabled={item.quantity <= 0}
                                                 >
                                                     <MdOutlineKeyboardArrowDown size={24} />
                                                 </button>

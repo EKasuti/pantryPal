@@ -96,7 +96,7 @@ async function createPantry(userId, name) {
       name: name,
       userId: userId,
       categories: 0,
-      items: 0,  
+      items: 0,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     });
@@ -138,9 +138,12 @@ async function addItemToPantry(pantryId, item) {
     const itemRef = await pantryRef.collection('items').add(newItem);
     const addedItem = await itemRef.get();
 
-    // Update the categories count
+    // Update the categories count and items count
     const categories = new Set((await pantryRef.collection('items').get()).docs.map(doc => doc.data().category));
-    await pantryRef.update({ categories: categories.size });
+    await pantryRef.update({ 
+      categories: categories.size,
+      items: admin.firestore.FieldValue.increment(1) // Increment items count
+    });
 
     return {
       success: true,
@@ -252,4 +255,29 @@ async function deletePantry(userId, pantryId) {
   }
 }
 
-module.exports = { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry, getPantriesForUser, getPantryByNameAndUser, getItemsForPantry, deletePantry };
+async function updateItemQuantity(pantryId, itemId, newQuantity) {
+  try {
+    const pantryRef = db.collection('pantries').doc(pantryId);
+    const itemRef = pantryRef.collection('items').doc(itemId);
+
+    await itemRef.update({
+      quantity: newQuantity,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    const updatedItem = await itemRef.get();
+
+    return {
+      success: true,
+      item: {
+        id: itemId,
+        ...updatedItem.data()
+      }
+    };
+  } catch (error) {
+    console.error('Error updating item quantity:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+module.exports = { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry, getPantriesForUser, getPantryByNameAndUser, getItemsForPantry, deletePantry, updateItemQuantity };

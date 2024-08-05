@@ -2,7 +2,7 @@ console.log('Starting server.js');
 
 const express = require('express');
 const cors = require('cors');
-const { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry, getPantriesForUser, getPantryByNameAndUser, getItemsForPantry, deletePantry } = require('./firebase/services');
+const { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry, getPantriesForUser, getPantryByNameAndUser, getItemsForPantry, deletePantry, updateItemQuantity } = require('./firebase/services');
 const admin = require('firebase-admin');
 
 require('dotenv').config();
@@ -265,17 +265,49 @@ app.get('/api/pantry/:pantryName/items', authenticateUser, async (req, res) => {
   try {
     const userId = req.user.uid;
     const { pantryName } = req.params;
+    
+    console.log(`Fetching items for pantry: ${pantryName}, user: ${userId}`);
+    
     const pantry = await getPantryByNameAndUser(userId, pantryName);
     
     if (!pantry) {
+      console.log(`Pantry not found: ${pantryName}`);
       return res.status(404).json({ message: 'Pantry not found' });
     }
 
+    console.log(`Pantry found, id: ${pantry.id}`);
     const items = await getItemsForPantry(pantry.id);
+    
+    console.log(`Items fetched: ${items.length}`);
     res.status(200).json(items);
   } catch (error) {
     console.error('Error fetching pantry items:', error);
     res.status(500).json({ message: 'Error fetching pantry items', error: error.toString() });
+  }
+});
+
+// PATCH route to update item quantity
+app.patch('/api/pantry/:pantryId/item/:itemId', authenticateUser, async (req, res) => {
+  const { pantryId, itemId } = req.params;
+  const { quantity } = req.body;
+
+  if (quantity === undefined) {
+    return res.status(400).json({ message: 'Quantity is required' });
+  }
+
+  try {
+    const result = await updateItemQuantity(pantryId, itemId, quantity);
+    if (result.success) {
+      res.status(200).json({
+        message: 'Item quantity updated successfully',
+        item: result.item
+      });
+    } else {
+      res.status(400).json({ message: 'Failed to update item quantity', error: result.error });
+    }
+  } catch (error) {
+    console.error('Server error:', error);
+    res.status(500).json({ message: 'Server error', error: error.toString() });
   }
 });
 
