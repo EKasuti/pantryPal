@@ -175,4 +175,42 @@ async function getPantriesForUser(userId) {
   }
 }
 
-module.exports = { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry, getPantriesForUser };
+async function getPantryByNameAndUser(userId, pantryName) {
+  try {
+    const pantriesRef = db.collection('pantries');
+    const snapshot = await pantriesRef.where('userId', '==', userId).where('name', '==', pantryName).get();
+
+    if (snapshot.empty) {
+      return null;
+    }
+
+    const pantryDoc = snapshot.docs[0];
+    return { id: pantryDoc.id, ...pantryDoc.data() };
+  } catch (error) {
+    console.error('Error getting pantry by name and user:', error);
+    throw error;
+  }
+}
+
+async function getItemsForPantry(pantryId) {
+  try {
+    const itemsRef = db.collection('pantries').doc(pantryId).collection('items');
+    const snapshot = await itemsRef.get();
+
+    if (snapshot.empty) {
+      return [];
+    }
+
+    const items = [];
+    snapshot.forEach(doc => {
+      items.push({ id: doc.id, ...doc.data() });
+    });
+
+    return items;
+  } catch (error) {
+    console.error('Error getting items for pantry:', error);
+    throw error;
+  }
+}
+
+module.exports = { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry, getPantriesForUser, getPantryByNameAndUser, getItemsForPantry };
