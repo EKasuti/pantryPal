@@ -2,7 +2,7 @@ console.log('Starting server.js');
 
 const express = require('express');
 const cors = require('cors');
-const { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry, getPantriesForUser, getPantryByNameAndUser, getItemsForPantry, deletePantry, updateItemQuantity } = require('./firebase/services');
+const { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry, getPantriesForUser, getPantryByNameAndUser, getItemsForPantry, deletePantry, updateItemQuantity, deleteItemFromPantry } = require('./firebase/services');
 const admin = require('firebase-admin');
 
 require('dotenv').config();
@@ -215,6 +215,30 @@ app.delete('/api/pantry/:pantryId', authenticateUser, async (req, res) => {
       res.status(200).json({ message: result.message });
     } else {
       res.status(400).json({ message: 'Failed to delete pantry', error: result.error });
+    }
+  } catch (error) {
+    console.error('Server error:', error);
+    res.status(500).json({ message: 'Server error', error: error.toString() });
+  }
+});
+
+// DELETE route to remove an item from a pantry
+app.delete('/api/pantry/:pantryId/item/:itemId', authenticateUser, async (req, res) => {
+  const userId = req.user.uid;
+  const { pantryId, itemId } = req.params;
+
+  try {
+    // Check if the pantry exists and belongs to the user
+    const pantry = await getPantryByNameAndUser(pantryId, userId);
+    if (!pantry) {
+      return res.status(404).json({ message: 'Pantry not found or access denied' });
+    }
+
+    const result = await deleteItemFromPantry(pantryId, itemId);
+    if (result.success) {
+      res.status(200).json({ message: 'Item deleted successfully' });
+    } else {
+      res.status(400).json({ message: 'Failed to delete item', error: result.error });
     }
   } catch (error) {
     console.error('Server error:', error);

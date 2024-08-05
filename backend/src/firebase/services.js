@@ -287,4 +287,18 @@ async function updateItemQuantity(pantryId, itemId, newQuantity) {
   }
 }
 
-module.exports = { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry, getPantriesForUser, getPantryByNameAndUser, getItemsForPantry, deletePantry, updateItemQuantity };
+async function deleteItemFromPantry(pantryId, itemId) {
+  try {
+    const pantryRef = db.collection('pantries').doc(pantryId);
+    const itemRef = pantryRef.collection('items').doc(itemId);
+
+    await itemRef.delete();
+
+    return { success: true };
+  } catch (error) {
+    console.error('Error deleting item from pantry:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+module.exports = { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry, getPantriesForUser, getPantryByNameAndUser, getItemsForPantry, deletePantry, updateItemQuantity, deleteItemFromPantry };
