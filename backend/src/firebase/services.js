@@ -301,4 +301,19 @@ async function deleteItemFromPantry(pantryId, itemId) {
   }
 }
 
-module.exports = { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry, getPantriesForUser, getPantryByNameAndUser, getItemsForPantry, deletePantry, updateItemQuantity, deleteItemFromPantry };
+async function updateItemDetails(pantryId, itemId, updatedDetails) {
+  try {
+    const pantryRef = db.collection('pantries').doc(pantryId);
+    const itemRef = pantryRef.collection('items').doc(itemId);
+
+    await itemRef.update(updatedDetails);
+
+    const updatedItem = await itemRef.get();
+    return { success: true, item: { id: updatedItem.id, ...updatedItem.data() } };
+  } catch (error) {
+    console.error('Error updating item details:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+module.exports = { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry, getPantriesForUser, getPantryByNameAndUser, getItemsForPantry, deletePantry, updateItemQuantity, deleteItemFromPantry, updateItemDetails };

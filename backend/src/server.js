@@ -2,7 +2,7 @@ console.log('Starting server.js');
 
 const express = require('express');
 const cors = require('cors');
-const { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry, getPantriesForUser, getPantryByNameAndUser, getItemsForPantry, deletePantry, updateItemQuantity, deleteItemFromPantry } = require('./firebase/services');
+const { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry, getPantriesForUser, getPantryByNameAndUser, getItemsForPantry, deletePantry, updateItemQuantity, deleteItemFromPantry, updateItemDetails } = require('./firebase/services');
 const admin = require('firebase-admin');
 
 require('dotenv').config();
@@ -327,6 +327,38 @@ app.patch('/api/pantry/:pantryId/item/:itemId', authenticateUser, async (req, re
       });
     } else {
       res.status(400).json({ message: 'Failed to update item quantity', error: result.error });
+    }
+  } catch (error) {
+    console.error('Server error:', error);
+    res.status(500).json({ message: 'Server error', error: error.toString() });
+  }
+});
+
+// PUT route to update item details
+app.put('/api/pantry/:pantryId/item/:itemId', authenticateUser, async (req, res) => {
+  const { pantryId, itemId } = req.params;
+  const { name, category, quantity, purchaseDate, expiryDate } = req.body;
+  const userId = req.user.uid;
+
+  if (!name || !category || quantity === undefined) {
+    return res.status(400).json({ message: 'Name, category, and quantity are required' });
+  }
+
+  try {
+    // Check if the pantry exists and belongs to the user
+    const pantry = await getPantryByNameAndUser(pantryId, userId);
+    if (!pantry) {
+      return res.status(404).json({ message: 'Pantry not found or access denied' });
+    }
+
+    const result = await updateItemDetails(pantryId, itemId, { name, category, quantity, purchaseDate, expiryDate });
+    if (result.success) {
+      res.status(200).json({
+        message: 'Item updated successfully',
+        item: result.item
+      });
+    } else {
+      res.status(400).json({ message: 'Failed to update item', error: result.error });
     }
   } catch (error) {
     console.error('Server error:', error);

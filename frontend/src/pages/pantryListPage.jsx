@@ -7,10 +7,13 @@ import SearchBar from "../components/Common/SearchBar";
 import AddItems from "../components/Create/AddItems";
 import FilterButton from "../components/Common/FilterButton";
 import { API_BASE_URL } from "../config/api";
+import EditItems from "../components/Edit/EditItem";
 
 function PantryListPage({ pantryName: defaultPantryName }) {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
+    const [isEditItemModalOpen, setIsEditItemModalOpen] = useState(false);
+    const [editingItem, setEditingItem] = useState(null);
     const [pantryItems, setPantryItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -130,6 +133,48 @@ function PantryListPage({ pantryName: defaultPantryName }) {
         }
     };
 
+    const handleEditItem = async (updatedItem) => {
+        try {
+            console.log("Handling edit item:", updatedItem); // Add this line for debugging
+            const token = localStorage.getItem('token');
+            const pantryResponse = await fetch(`${API_BASE_URL}/api/pantry/list`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!pantryResponse.ok) throw new Error('Failed to fetch pantries');
+
+            const pantries = await pantryResponse.json();
+            const currentPantry = pantries.find(p => p.name === currentPantryName);
+
+            if (!currentPantry) throw new Error('Pantry not found');
+
+            const response = await fetch(`${API_BASE_URL}/api/pantry/${currentPantry.id}/item/${updatedItem.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(updatedItem)
+            });
+
+            if (!response.ok) throw new Error('Failed to update item');
+
+            const updatedItemFromServer = await response.json();
+
+            setPantryItems(prevItems =>
+                prevItems.map(item =>
+                    item.id === updatedItem.id ? { ...updatedItemFromServer, numericId: item.numericId } : item
+                )
+            );
+
+            setIsEditItemModalOpen(false);
+            setEditingItem(null);
+        } catch (error) {
+            console.error('Error updating item:', error);
+            setError(error.message);
+        }
+    };
+
     const handleDeleteItem = async (itemId) => {
         try {
             const token = localStorage.getItem('token');
@@ -153,10 +198,8 @@ function PantryListPage({ pantryName: defaultPantryName }) {
 
             if (!response.ok) throw new Error('Failed to delete item');
 
-            // Remove the item from the state
             setPantryItems(prevItems => {
                 const updatedItems = prevItems.filter(item => item.id !== itemId);
-                // Recalculate numericIds
                 return updatedItems.map((item, index) => ({ ...item, numericId: index + 1 }));
             });
         } catch (error) {
@@ -233,7 +276,13 @@ function PantryListPage({ pantryName: defaultPantryName }) {
                                             </div>
                                         </td>
                                         <td className="text-left p-3">
-                                            <button className="text-blue-600 mr-2 hover:text-blue-800">
+                                            <button 
+                                                className="text-blue-600 mr-2 hover:text-blue-800"
+                                                onClick={() => {
+                                                    setEditingItem(item);
+                                                    setIsEditItemModalOpen(true);
+                                                }}
+                                            >
                                                 <MdEdit size={18} />
                                             </button>
                                             <button 
@@ -261,6 +310,16 @@ function PantryListPage({ pantryName: defaultPantryName }) {
                     pantryName={currentPantryName}
                     onClose={() => setIsAddItemModalOpen(false)}
                     onAddItem={handleAddItem}
+                />
+            )}
+            {isEditItemModalOpen && (
+                <EditItems 
+                    item={editingItem}
+                    onClose={() => {
+                        setIsEditItemModalOpen(false);
+                        setEditingItem(null);
+                    }}
+                    onEditItem={handleEditItem}
                 />
             )}
         </div>
