@@ -84,8 +84,8 @@ function LandingPage() {
     <div className="bg-white">
       <Navbar isWaitlist={false} activePage={activePage}/>
 
-      <section id="home" className="p-4 sm:p-8 md:p-20 flex flex-col md:flex-row justify-between items-center">
-        <div className="w-full md:w-1/2 flex flex-col items-center md:items-start mt-20 md:mt-40">
+      <section id="home" className="p-8 sm:p-8 md:p-20 flex flex-col md:flex-row justify-between items-center">
+        <div className="w-full md:w-1/2 flex flex-col items-center md:items-start mt-[120px] md:mt-40">
           <h1 className="text-3xl md:text-4xl font-bold mb-4 md:mb-8 text-center md:text-left">
             Effortlessly Track Your Pantry
           </h1>
@@ -115,11 +115,11 @@ function LandingPage() {
         </div>
       </section>
 
-      <section id="features" className="p-20">
+      <section id="features" className="p-8 sm:p-8 md:p-20">
         <div className="flex flex-col items-center mb-8">
           <div className="w-full h-[1px] bg-black opacity-20 mb-4"></div>
-          <h2 className="text-4xl font-bold mb-4">Features</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <h2 className="text-3xl sm:text-4xl font-bold mb-4 text-center">Features</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
             {featuresData.map((feature, index) => (
               <FeatureCard key={index} {...feature} />
             ))}
@@ -127,32 +127,32 @@ function LandingPage() {
         </div>
       </section>
 
-      <section id="how-it-works" className="p-20">
+      <section id="how-it-works" className="p-8 sm:p-8 md:p-20">
         <div className="flex flex-col items-center">
           <div className="w-full h-[1px] bg-black opacity-20 mb-4"></div>
-          <h2 className="text-2xl font-bold text-primary mb-4">How it works</h2>
-          <h2 className="text-4xl font-bold mb-12">It's easy as 1, 2, 3</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-10 text-center">
-            <div>
-              <h3 className="text-2xl font-semibold mb-4">
+          <h2 className="text-xl sm:text-2xl font-bold text-primary mb-2 sm:mb-4 text-center">How it works</h2>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-6 sm:mb-12 text-center">It's easy as 1, 2, 3</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 mb-10 text-center">
+            <div className="mb-6 md:mb-0">
+              <h3 className="text-xl sm:text-2xl font-semibold mb-2 sm:mb-4">
                 Add & Organize Your Items
               </h3>
-              <p className="text-gray-600">
+              <p className="text-gray-600 text-sm sm:text-base">
                 Create an account and log in on any device. Easily add items to
                 your pantry. Categorize and organize items efficiently.
               </p>
             </div>
-            <div>
-              <h3 className="text-2xl font-semibold mb-4">Receive Reminders</h3>
-              <p className="text-gray-600">
+            <div className="mb-6 md:mb-0">
+              <h3 className="text-xl sm:text-2xl font-semibold mb-2 sm:mb-4">Receive Reminders</h3>
+              <p className="text-gray-600 text-sm sm:text-base">
                 Get notifications for expiring items to reduce waste. Generate
                 custom shopping lists based on your pantry inventory to avoid
                 duplicate purchases.
               </p>
             </div>
             <div>
-              <h3 className="text-2xl font-semibold mb-4">Discover Recipes</h3>
-              <p className="text-gray-600">
+              <h3 className="text-xl sm:text-2xl font-semibold mb-2 sm:mb-4">Discover Recipes</h3>
+              <p className="text-gray-600 text-sm sm:text-base">
                 Find recipe suggestions using your pantry items and track your
                 usage. Sync your pantry information across all devices for
                 seamless access and management.
@@ -197,12 +197,12 @@ function LandingPage() {
         </div>
       </section>
 
-      <section id="recipes" className="p-20">
+      <section id="recipes" className="p-8 sm:p-8 md:p-20">
         <div className="flex flex-col items-center mb-8">
           <div className="w-full h-[1px] bg-black opacity-20 mb-4"></div>
-          <h2 className="text-2xl font-bold text-primary">Recipe</h2>
-          <div className="flex items-center justify-between w-full relative h-[600px]">
-            <div className="absolute left-0 top-0 w-64 h-64 p-6 bg-white rounded-full shadow-lg flex flex-col justify-center items-center text-center z-10">
+          <h2 className="text-xl sm:text-2xl font-bold text-primary mb-4 text-center">Recipe</h2>
+          <div className="flex flex-col md:flex-row items-center justify-between w-full relative md:h-[600px]">
+            <div className="w-full md:w-64 h-64 p-6 bg-white rounded-full shadow-lg flex flex-col justify-center items-center text-center z-10 mb-8 md:mb-0 md:absolute md:left-0 md:top-0">
               <h3 className="text-lg font-semibold mb-2">
                 Pantry-Based Recipes
               </h3>
@@ -211,14 +211,14 @@ function LandingPage() {
                 reducing waste and simplifying meal planning.
               </p>
             </div>
-            <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 w-1/2 flex justify-center">
+            <div className="w-full md:w-1/2 flex justify-center mb-8 md:mb-0 md:absolute md:left-1/2 md:top-1/2 md:transform md:-translate-x-1/2 md:-translate-y-1/2">
               <img
                 src={recipeImage}
                 alt="Recipe book with ingredients"
                 className="w-4/5 object-contain"
               />
             </div>
-            <div className="absolute right-0 bottom-0 w-64 h-64 p-6 bg-white rounded-full shadow-lg flex flex-col justify-center items-center text-center z-10">
+            <div className="w-full md:w-64 h-64 p-6 bg-white rounded-full shadow-lg flex flex-col justify-center items-center text-center z-10 md:absolute md:right-0 md:bottom-0">
               <h3 className="text-lg font-semibold mb-2">Quick & Easy</h3>
               <p className="text-sm">
                 Browse simple and fast recipes that require minimal ingredients
