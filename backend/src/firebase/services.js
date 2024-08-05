@@ -16,10 +16,8 @@ const addEmailToWaitlist = async (email) => {
       email: email,
       timestamp: new Date()
     });
-    console.log('Document written with ID: ', docRef.id);
     return { success: true, id: docRef.id };
   } catch (error) {
-    console.error('Error adding document: ', error);
     return { success: false, error: error.message };
   }
 };
@@ -32,7 +30,6 @@ const getAllWaitlistEntries = async () => {
       ...doc.data()
     }));
   } catch (error) {
-    console.error('Error getting documents: ', error);
     throw error;
   }
 };
@@ -51,7 +48,6 @@ async function createUser(email, password) {
 
     return { success: true, uid: userRecord.uid };
   } catch (error) {
-    console.error('Error creating user:', error);
     return { success: false, error: error.message };
   }
 }
@@ -85,7 +81,6 @@ async function loginUser(email, password) {
       token: data.idToken
     };
   } catch (error) {
-    console.error('Error logging in user:', error);
     return { success: false, error: error.message };
   }
 }
@@ -111,7 +106,6 @@ async function createPantry(userId, name) {
       }
     };
   } catch (error) {
-    console.error('Error creating pantry:', error);
     return { success: false, error: error.message };
   }
 }
@@ -127,10 +121,10 @@ async function addItemToPantry(pantryId, item) {
 
     const newItem = {
       name: item.name,
-      category: item.category,
+      category: item.category || "-",
       quantity: item.quantity,
-      purchaseDate: item.purchaseDate || null,
-      expiryDate: item.expiryDate || null,
+      purchaseDate: item.purchaseDate || "-",
+      expiryDate: item.expiryDate || "-",
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     };
@@ -153,7 +147,6 @@ async function addItemToPantry(pantryId, item) {
       }
     };
   } catch (error) {
-    console.error('Error adding item to pantry:', error);
     return { success: false, error: error.message };
   }
 }
@@ -174,34 +167,27 @@ async function getPantriesForUser(userId) {
 
     return pantries;
   } catch (error) {
-    console.error('Error getting pantries for user:', error);
     throw error;
   }
 }
 
 async function getPantryByNameAndUser(pantryId, userId) {
   try {
-    console.log(`Attempting to fetch pantry with ID ${pantryId} for user ${userId}`);
     const pantryRef = db.collection('pantries').doc(pantryId);
     const pantry = await pantryRef.get();
 
     if (!pantry.exists) {
-      console.log(`Pantry with ID ${pantryId} not found in the database`);
       return null;
     }
 
     const pantryData = pantry.data();
-    console.log(`Pantry data:`, pantryData);
 
     if (pantryData.userId !== userId) {
-      console.log(`Pantry ${pantryId} belongs to user ${pantryData.userId}, not ${userId}`);
       return null;
     }
 
-    console.log(`Successfully fetched pantry ${pantryId} for user ${userId}`);
     return { id: pantry.id, ...pantryData };
   } catch (error) {
-    console.error(`Error getting pantry ${pantryId} for user ${userId}:`, error);
     throw error;
   }
 }
@@ -216,27 +202,22 @@ async function getItemsForPantry(pantryId) {
       ...doc.data()
     }));
 
-    console.log(`Retrieved ${items.length} items for pantry ${pantryId}`);
     return items;
   } catch (error) {
-    console.error(`Error getting items for pantry ${pantryId}:`, error);
     throw error;
   }
 }
 
 async function deletePantry(userId, pantryId) {
   try {
-    console.log(`Attempting to delete pantry ${pantryId} for user ${userId}`);
     const pantryRef = db.collection('pantries').doc(pantryId);
     const pantry = await pantryRef.get();
 
     if (!pantry.exists) {
-      console.log(`Pantry ${pantryId} not found`);
       throw new Error('Pantry not found');
     }
 
     if (pantry.data().userId !== userId) {
-      console.log(`User ${userId} not authorized to delete pantry ${pantryId}`);
       throw new Error('Unauthorized: User does not own this pantry');
     }
 
@@ -253,11 +234,9 @@ async function deletePantry(userId, pantryId) {
 
     // Commit the batch
     await batch.commit();
-    console.log(`Successfully deleted pantry ${pantryId} and its items`);
 
     return { success: true, message: 'Pantry and all its items deleted successfully' };
   } catch (error) {
-    console.error('Error deleting pantry:', error);
     return { success: false, error: error.message };
   }
 }
@@ -282,7 +261,6 @@ async function updateItemQuantity(pantryId, itemId, newQuantity) {
       }
     };
   } catch (error) {
-    console.error('Error updating item quantity:', error);
     return { success: false, error: error.message };
   }
 }
@@ -296,7 +274,6 @@ async function deleteItemFromPantry(pantryId, itemId) {
 
     return { success: true };
   } catch (error) {
-    console.error('Error deleting item from pantry:', error);
     return { success: false, error: error.message };
   }
 }
@@ -311,7 +288,6 @@ async function updateItemDetails(pantryId, itemId, updatedDetails) {
     const updatedItem = await itemRef.get();
     return { success: true, item: { id: updatedItem.id, ...updatedItem.data() } };
   } catch (error) {
-    console.error('Error updating item details:', error);
     return { success: false, error: error.message };
   }
 }
