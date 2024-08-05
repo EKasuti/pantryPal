@@ -18,6 +18,7 @@ function PantryListPage({ pantryName: defaultPantryName }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [filteredPantryItems, setFilteredPantryItems] = useState([]);
+    const [categoryFilter, setCategoryFilter] = useState('');
     const { pantryName: urlPantryName } = useParams();
     const currentPantryName = (urlPantryName || defaultPantryName || "Pantry 01").trim();
     const navigate = useNavigate();
@@ -224,16 +225,33 @@ function PantryListPage({ pantryName: defaultPantryName }) {
         }
     };
 
-    const handleSearch = (searchTerm) => {
+    const handleFilter = useCallback((category) => {
+        setCategoryFilter(category);
+        if (category) {
+            const filtered = pantryItems.filter(item => 
+                item.category.toLowerCase().includes(category.toLowerCase())
+            );
+            setFilteredPantryItems(filtered);
+        } else {
+            setFilteredPantryItems(pantryItems);
+        }
+    }, [pantryItems]);
+
+    const handleSearch = useCallback((searchTerm) => {
         const filtered = pantryItems.filter(item => 
-            item.name.toLowerCase().startsWith(searchTerm.toLowerCase())
+            item.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+            (categoryFilter ? item.category.toLowerCase().includes(categoryFilter.toLowerCase()) : true)
         );
         setFilteredPantryItems(filtered);
-    };
+    }, [pantryItems, categoryFilter]);
 
     useEffect(() => {
-        setFilteredPantryItems(pantryItems);
-    }, [pantryItems]);
+        if (categoryFilter) {
+            handleFilter(categoryFilter);
+        } else {
+            setFilteredPantryItems(pantryItems);
+        }
+    }, [pantryItems, categoryFilter, handleFilter]);
 
     if (loading) return <div>Loading...</div>;
     if (error) return <div>Error: {error}</div>;
@@ -261,7 +279,10 @@ function PantryListPage({ pantryName: defaultPantryName }) {
                                 placeholder={`Search ${currentPantryName} Items`}
                                 onSearch={handleSearch}
                             />
-                            <FilterButton placeholder="Filter by category" />
+                            <FilterButton 
+                                placeholder="Filter by category" 
+                                onFilter={handleFilter}
+                            />
                             <button 
                                 className="bg-primary text-white px-4 py-2 rounded-md"
                                 onClick={() => setIsAddItemModalOpen(true)}
