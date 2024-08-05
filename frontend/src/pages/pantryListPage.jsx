@@ -15,28 +15,63 @@ function PantryListPage({ pantryName: defaultPantryName }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const { pantryName: urlPantryName } = useParams();
-    const currentPantryName = urlPantryName || defaultPantryName || "Pantry 01";
+    const currentPantryName = (urlPantryName || defaultPantryName || "Pantry 01").trim();
     const navigate = useNavigate();
 
     useEffect(() => {
-        fetchPantryItems();
+        fetchPantryItems(currentPantryName);
     }, [currentPantryName]);
 
-    const fetchPantryItems = async () => {
+    const fetchPantryItems = async (pantryName) => {
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`${API_BASE_URL}/api/pantry/${currentPantryName}/items`, {
+            
+            // First, get the pantry ID using the pantry name
+            const pantriesResponse = await fetch(`${API_BASE_URL}/api/pantry/list`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (!pantriesResponse.ok) {
+                throw new Error('Failed to fetch pantries');
+            }
+
+            const pantries = await pantriesResponse.json();
+            console.log('Fetched pantries:', pantries);
+            console.log('Current pantry name:', pantryName);
+
+            const currentPantry = pantries.find(p => p.name.trim().toLowerCase() === pantryName.trim().toLowerCase());
+
+            if (!currentPantry) {
+                console.log('Pantry not found. Available pantries:', pantries.map(p => p.name));
+                throw new Error('Pantry not found');
+            }
+
+            console.log('Current pantry:', currentPantry);
+
+            // Now use the pantry ID to fetch items
+            const itemsUrl = `${API_BASE_URL}/api/pantry/${currentPantry.id}/items`;
+            console.log('Fetching items from URL:', itemsUrl);
+            console.log('Request headers:', {
+                'Authorization': `Bearer ${token}`
+            });
+
+            const response = await fetch(itemsUrl, {
                 headers: {
                     'Authorization': `Bearer ${token}`
                 }
             });
 
             if (!response.ok) {
+                console.log('Response status:', response.status);
+                console.log('Response text:', await response.text());
                 throw new Error('Failed to fetch pantry items');
             }
 
             const data = await response.json();
-            setPantryItems(data);
+            console.log('Fetched items:', data);
+            setPantryItems(data || []); // Ensure we always set an array, even if data is null or undefined
         } catch (error) {
             console.error('Error fetching pantry items:', error);
             setError(error.message);
@@ -106,6 +141,9 @@ function PantryListPage({ pantryName: defaultPantryName }) {
                 throw new Error('Pantry not found');
             }
 
+            console.log('Adding item to pantry:', currentPantry);
+            console.log('New item:', newItem);
+
             // Now use the pantry ID to add the item
             const response = await fetch(`${API_BASE_URL}/api/pantry/${currentPantry.id}/item`, {
                 method: 'POST',
@@ -117,6 +155,8 @@ function PantryListPage({ pantryName: defaultPantryName }) {
             });
 
             if (!response.ok) {
+                console.log('Response status:', response.status);
+                console.log('Response text:', await response.text());
                 throw new Error('Failed to add new item');
             }
 
@@ -124,7 +164,7 @@ function PantryListPage({ pantryName: defaultPantryName }) {
             console.log('New item added:', addedItem);
 
             // Update the items state with the new item
-            setPantryItems(prevItems => [...prevItems, addedItem.item]);
+            setPantryItems(prevItems => [...prevItems, addedItem]);
 
             // Close the modal
             setIsAddItemModalOpen(false);

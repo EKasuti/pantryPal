@@ -179,40 +179,47 @@ async function getPantriesForUser(userId) {
   }
 }
 
-async function getPantryByNameAndUser(userId, pantryName) {
+async function getPantryByNameAndUser(pantryId, userId) {
   try {
-    const pantriesRef = db.collection('pantries');
-    const snapshot = await pantriesRef.where('userId', '==', userId).where('name', '==', pantryName).get();
+    console.log(`Attempting to fetch pantry with ID ${pantryId} for user ${userId}`);
+    const pantryRef = db.collection('pantries').doc(pantryId);
+    const pantry = await pantryRef.get();
 
-    if (snapshot.empty) {
+    if (!pantry.exists) {
+      console.log(`Pantry with ID ${pantryId} not found in the database`);
       return null;
     }
 
-    const pantryDoc = snapshot.docs[0];
-    return { id: pantryDoc.id, ...pantryDoc.data() };
+    const pantryData = pantry.data();
+    console.log(`Pantry data:`, pantryData);
+
+    if (pantryData.userId !== userId) {
+      console.log(`Pantry ${pantryId} belongs to user ${pantryData.userId}, not ${userId}`);
+      return null;
+    }
+
+    console.log(`Successfully fetched pantry ${pantryId} for user ${userId}`);
+    return { id: pantry.id, ...pantryData };
   } catch (error) {
-    console.error('Error getting pantry by name and user:', error);
+    console.error(`Error getting pantry ${pantryId} for user ${userId}:`, error);
     throw error;
   }
 }
 
 async function getItemsForPantry(pantryId) {
   try {
-    const itemsRef = db.collection('pantries').doc(pantryId).collection('items');
-    const snapshot = await itemsRef.get();
+    const pantryRef = db.collection('pantries').doc(pantryId);
+    const itemsSnapshot = await pantryRef.collection('items').get();
+    
+    const items = itemsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
 
-    if (snapshot.empty) {
-      return [];
-    }
-
-    const items = [];
-    snapshot.forEach(doc => {
-      items.push({ id: doc.id, ...doc.data() });
-    });
-
+    console.log(`Retrieved ${items.length} items for pantry ${pantryId}`);
     return items;
   } catch (error) {
-    console.error('Error getting items for pantry:', error);
+    console.error(`Error getting items for pantry ${pantryId}:`, error);
     throw error;
   }
 }

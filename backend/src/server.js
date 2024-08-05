@@ -261,28 +261,27 @@ app.get('/api/pantry/list', authenticateUser, async (req, res) => {
 });
 
 // GET route to retrieve items for a specific pantry
-app.get('/api/pantry/:pantryName/items', authenticateUser, async (req, res) => {
+app.get('/api/pantry/:pantryId/items', authenticateUser, async (req, res) => {
   try {
+    const pantryId = req.params.pantryId;
     const userId = req.user.uid;
-    const { pantryName } = req.params;
-    
-    console.log(`Fetching items for pantry: ${pantryName}, user: ${userId}`);
-    
-    const pantry = await getPantryByNameAndUser(userId, pantryName);
-    
+    console.log(`Attempting to fetch items for pantry ${pantryId} for user ${userId}`);
+
+    // Check if the pantry exists and belongs to the user
+    const pantry = await getPantryByNameAndUser(pantryId, userId);
     if (!pantry) {
-      console.log(`Pantry not found: ${pantryName}`);
-      return res.status(404).json({ message: 'Pantry not found' });
+      console.log(`Pantry ${pantryId} not found or does not belong to user ${userId}`);
+      return res.status(404).json({ message: 'Pantry not found or access denied' });
     }
 
-    console.log(`Pantry found, id: ${pantry.id}`);
-    const items = await getItemsForPantry(pantry.id);
-    
-    console.log(`Items fetched: ${items.length}`);
+    // Fetch items for the pantry
+    const items = await getItemsForPantry(pantryId);
+    console.log(`Found ${items.length} items for pantry ${pantryId}`);
+
     res.status(200).json(items);
   } catch (error) {
     console.error('Error fetching pantry items:', error);
-    res.status(500).json({ message: 'Error fetching pantry items', error: error.toString() });
+    res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 });
 
