@@ -20,6 +20,22 @@ function PantryListPage({ pantryName: defaultPantryName }) {
     const { pantryName: urlPantryName } = useParams();
     const currentPantryName = (urlPantryName || defaultPantryName || "Pantry 01").trim();
     const navigate = useNavigate();
+    const [user, setUser] = useState(null);
+
+    const fetchUserData = useCallback(async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Failed to fetch user data');
+            const userData = await response.json();
+            setUser(userData);
+        } catch (error) {
+            console.error('Error fetching user data:', error);
+            setError(error.message);
+        }
+    }, []);
 
     const fetchPantryItems = useCallback(async () => {
         try {
@@ -55,14 +71,9 @@ function PantryListPage({ pantryName: defaultPantryName }) {
     }, [currentPantryName]);
 
     useEffect(() => {
+        fetchUserData();
         fetchPantryItems();
-    }, [fetchPantryItems]);
-
-    useEffect(() => {
-        if (!isAddItemModalOpen) {
-            fetchPantryItems();
-        }
-    }, [isAddItemModalOpen, fetchPantryItems]);
+    }, [fetchUserData, fetchPantryItems]);
 
     const handleQuantityChange = async (itemId, change) => {
         try {
@@ -127,6 +138,7 @@ function PantryListPage({ pantryName: defaultPantryName }) {
             });
 
             setIsAddItemModalOpen(false);
+            await fetchPantryItems(); // Refresh the items after adding a new one
         } catch (error) {
             console.error('Error adding new item:', error);
             setError(error.message);
@@ -169,6 +181,7 @@ function PantryListPage({ pantryName: defaultPantryName }) {
 
             setIsEditItemModalOpen(false);
             setEditingItem(null);
+            await fetchPantryItems(); // Refresh the items after editing an item
         } catch (error) {
             console.error('Error updating item:', error);
             setError(error.message);
@@ -202,6 +215,8 @@ function PantryListPage({ pantryName: defaultPantryName }) {
                 const updatedItems = prevItems.filter(item => item.id !== itemId);
                 return updatedItems.map((item, index) => ({ ...item, numericId: index + 1 }));
             });
+
+            await fetchPantryItems(); // Refresh the items after deleting an item
         } catch (error) {
             console.error('Error deleting item:', error);
             setError(error.message);
@@ -215,7 +230,11 @@ function PantryListPage({ pantryName: defaultPantryName }) {
         <div className="flex h-screen bg-gray-100">
             <Sidebar isCollapsed={isSidebarCollapsed} currentPantryName={currentPantryName} />
             <div className="flex-1 flex flex-col overflow-hidden">
-                <DashboardNavbar toggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)} />
+                <DashboardNavbar 
+                    toggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+                    userName={user ? user.name : ''}
+                    isSidebarCollapsed={isSidebarCollapsed}
+                />
                 <main className="flex-1 p-6">
                     <div className="flex justify-between items-center mb-6">
                         <button 
