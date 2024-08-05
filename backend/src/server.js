@@ -156,7 +156,7 @@ const authenticateUser = async (req, res, next) => {
 
 // POST route to create a pantry
 app.post('/api/pantry/add', authenticateUser, async (req, res) => {
-  const { name } = req.body;
+  const { name, notes } = req.body;
   const userId = req.user.uid;
 
   if (!name) {
@@ -164,7 +164,7 @@ app.post('/api/pantry/add', authenticateUser, async (req, res) => {
   }
 
   try {
-    const result = await createPantry(userId, name);
+    const result = await createPantry(userId, name, notes);
     if (result.success) {
       res.status(201).json({
         message: 'Pantry created successfully',

@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { FaThumbtack } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import { MdDeleteOutline, MdEdit } from "react-icons/md";
+import { MdDeleteOutline, MdEdit, MdExpandMore, MdExpandLess } from "react-icons/md";
 import { API_BASE_URL } from "../../config/api";
 
 function PantryList({ pantries, onPantryDeleted }) {
   const navigate = useNavigate();
   const [error, setError] = useState(null);
+  const [expandedPantry, setExpandedPantry] = useState(null);
 
   const handleEditClick = (event, pantryName) => {
     event.stopPropagation(); 
@@ -26,14 +27,9 @@ function PantryList({ pantries, onPantryDeleted }) {
         });
 
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Server response:', errorText);
           throw new Error(`Failed to delete pantry: ${response.statusText}`);
         }
 
-        const data = await response.json();
-        console.log('Deletion successful:', data);
-        
         // Call onPantryDeleted only if it's a function
         if (typeof onPantryDeleted === 'function') {
           onPantryDeleted(pantryId);
@@ -47,6 +43,10 @@ function PantryList({ pantries, onPantryDeleted }) {
         setError(error.message);
       }
     }
+  };
+
+  const toggleExpand = (pantryId) => {
+    setExpandedPantry(expandedPantry === pantryId ? null : pantryId);
   };
 
   return (
@@ -78,7 +78,28 @@ function PantryList({ pantries, onPantryDeleted }) {
               <span>{pantry.items}</span>
             </div>
           </div>
-          <div className="flex justify-end space-x-1">
+          {pantry.notes && (
+            <div className="mt-2">
+              <button
+                onClick={() => toggleExpand(pantry.id)}
+                className="flex items-center text-sm text-blue-500 hover:text-blue-700"
+              >
+                {expandedPantry === pantry.id ? (
+                  <>
+                    <MdExpandLess className="mr-1" /> Hide Notes
+                  </>
+                ) : (
+                  <>
+                    <MdExpandMore className="mr-1" /> Show Notes
+                  </>
+                )}
+              </button>
+              {expandedPantry === pantry.id && (
+                <p className="mt-2 text-sm text-gray-600">{pantry.notes}</p>
+              )}
+            </div>
+          )}
+          <div className="flex justify-end space-x-1 mt-2">
             <button 
               className="text-blue-500 hover:text-blue-700"
               onClick={(e) => handleEditClick(e, pantry.name)}

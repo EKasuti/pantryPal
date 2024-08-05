@@ -5,6 +5,7 @@ import { API_BASE_URL } from "../../config/api";
 
 function CreatePantry({ onClose, onPantryCreated }) {
   const [pantryName, setPantryName] = useState("");
+  const [notes, setNotes] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -21,7 +22,7 @@ function CreatePantry({ onClose, onPantryCreated }) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ name: pantryName })
+        body: JSON.stringify({ name: pantryName, notes: notes })
       });
 
       if (!response.ok) {
@@ -29,18 +30,13 @@ function CreatePantry({ onClose, onPantryCreated }) {
       }
 
       const data = await response.json();
-      console.log("Pantry created:", data);
       
-      // Call onPantryCreated only if it's a function
       if (typeof onPantryCreated === 'function') {
         onPantryCreated(data.pantry);
-      } else {
-        console.error('onPantryCreated is not a function');
       }
 
       onClose();
     } catch (error) {
-      console.error("Error creating pantry:", error);
       setError(error.message);
     } finally {
       setIsLoading(false);
@@ -65,6 +61,13 @@ function CreatePantry({ onClose, onPantryCreated }) {
             onChange={(e) => setPantryName(e.target.value)}
             required
           />
+          <InputField
+            label="Notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Notes (optional)"
+          />
+          
           {error && <p className="text-red-500 mt-2">{error}</p>}
           <div className="flex justify-end mt-4">
             <button

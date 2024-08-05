@@ -85,13 +85,14 @@ async function loginUser(email, password) {
   }
 }
 
-async function createPantry(userId, name) {
+async function createPantry(userId, name, notes = '') {
   try {
     const pantryRef = await db.collection('pantries').add({
       name: name,
       userId: userId,
       categories: 0,
       items: 0,
+      notes: notes,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
     });
