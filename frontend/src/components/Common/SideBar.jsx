@@ -1,12 +1,50 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaHome } from 'react-icons/fa';
 import logo from '../../images/logo/logo.png';
 import { Link } from 'react-router-dom';
-import { pantryList } from "../../data/PantryList";
+import { API_BASE_URL } from "../../config/api";
+import Loader from './Loader';
 
 function Sidebar({ isCollapsed, currentPantryName }) {
+  const [pantries, setPantries] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const sidebarWidth = isCollapsed ? 'w-30' : 'w-64';
 
+  useEffect(() => {
+    fetchPantries();
+  }, []);
+
+  const fetchPantries = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE_URL}/api/pantry/list`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch pantries');
+      }
+
+      const data = await response.json();
+      setPantries(data);
+    } catch (error) {
+      console.error('Error fetching pantries:', error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return <Loader />;
+  }
+
+  if (error) {
+    return <div className="text-red-500 p-4">Error: {error}</div>;
+  }
 
   return (
     <aside className={`${sidebarWidth} bg-blue-900 text-white transition-all duration-300 ease-in-out h-screen`}>
@@ -23,7 +61,7 @@ function Sidebar({ isCollapsed, currentPantryName }) {
                 {!isCollapsed && <span className="text-lg">Pantries</span>}
               </Link>
             </li>
-            {!isCollapsed && pantryList.map((pantry) => (
+            {!isCollapsed && pantries.map((pantry) => (
               <li key={pantry.id} className="mb-2 ">
                 <Link 
                   to={`/dashboard/pantryList/${pantry.name}`} 

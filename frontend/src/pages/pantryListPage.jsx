@@ -12,6 +12,7 @@ function PantryListPage({ pantryName: defaultPantryName }) {
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
     const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
     const [pantryItems, setPantryItems] = useState([]);
+    const [itemIdMap, setItemIdMap] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const { pantryName: urlPantryName } = useParams();
@@ -36,7 +37,17 @@ function PantryListPage({ pantryName: defaultPantryName }) {
             }
 
             const data = await response.json();
-            setPantryItems(data);
+            const itemsWithSequentialIds = data.map((item, index) => ({
+                ...item,
+                sequentialId: index + 1
+            }));
+            setPantryItems(itemsWithSequentialIds);
+
+            const newItemIdMap = {};
+            itemsWithSequentialIds.forEach(item => {
+                newItemIdMap[item.sequentialId] = item.id;
+            });
+            setItemIdMap(newItemIdMap);
         } catch (error) {
             console.error('Error fetching pantry items:', error);
             setError(error.message);
@@ -45,18 +56,11 @@ function PantryListPage({ pantryName: defaultPantryName }) {
         }
     };
 
-    const handleBackClick = () => {
-        navigate('/dashboard');
-    };
-
-    const toggleSidebar = () => {
-        setIsSidebarCollapsed(!isSidebarCollapsed);
-    };
-
-    const handleQuantityChange = async (itemId, change) => {
+    const handleQuantityChange = async (sequentialId, change) => {
+        const originalId = itemIdMap[sequentialId];
         try {
             const token = localStorage.getItem('token');
-            const response = await fetch(`${API_BASE_URL}/api/pantry/${currentPantryName}/item/${itemId}/quantity`, {
+            const response = await fetch(`${API_BASE_URL}/api/pantry/${currentPantryName}/item/${originalId}/quantity`, {
                 method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -75,6 +79,14 @@ function PantryListPage({ pantryName: defaultPantryName }) {
             console.error('Error updating item quantity:', error);
             setError(error.message);
         }
+    };
+
+    const handleBackClick = () => {
+        navigate('/dashboard');
+    };
+
+    const toggleSidebar = () => {
+        setIsSidebarCollapsed(!isSidebarCollapsed);
     };
 
     const handleAddItem = async (newItem) => {
@@ -156,8 +168,8 @@ function PantryListPage({ pantryName: defaultPantryName }) {
                         <tbody>
                             {pantryItems.length > 0 ? (
                                 pantryItems.map((item) => (
-                                    <tr key={item.id} className="border-b">
-                                         <td className="p-3">{item.id}</td>
+                                    <tr key={item.sequentialId} className="border-b">
+                                         <td className="p-3">{item.sequentialId}</td>
                                         <td className="text-left p-3">{item.name}</td>
                                         <td className="text-left p-3">{item.category}</td>
                                         <td className="text-left p-3">{item.purchaseDate}</td>
@@ -165,14 +177,14 @@ function PantryListPage({ pantryName: defaultPantryName }) {
                                         <td className="text-left p-3">
                                             <div className="flex items-center">
                                                 <button 
-                                                    onClick={() => handleQuantityChange(item.id, 1)}
+                                                    onClick={() => handleQuantityChange(item.sequentialId, 1)}
                                                     className="text-gray-600 hover:text-blue-600"
                                                 >
                                                     <MdOutlineKeyboardArrowUp size={24} />
                                                 </button>
                                                 <span className="mx-2">{item.quantity}</span>
                                                 <button 
-                                                    onClick={() => handleQuantityChange(item.id, -1)}
+                                                    onClick={() => handleQuantityChange(item.sequentialId, -1)}
                                                     className="text-gray-600 hover:text-blue-600"
                                                 >
                                                     <MdOutlineKeyboardArrowDown size={24} />

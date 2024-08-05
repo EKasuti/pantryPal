@@ -213,4 +213,42 @@ async function getItemsForPantry(pantryId) {
   }
 }
 
-module.exports = { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry, getPantriesForUser, getPantryByNameAndUser, getItemsForPantry };
+async function deletePantry(userId, pantryId) {
+  try {
+    console.log(`Attempting to delete pantry ${pantryId} for user ${userId}`);
+    const pantryRef = db.collection('pantries').doc(pantryId);
+    const pantry = await pantryRef.get();
+
+    if (!pantry.exists) {
+      console.log(`Pantry ${pantryId} not found`);
+      throw new Error('Pantry not found');
+    }
+
+    if (pantry.data().userId !== userId) {
+      console.log(`User ${userId} not authorized to delete pantry ${pantryId}`);
+      throw new Error('Unauthorized: User does not own this pantry');
+    }
+
+    // Delete all items in the pantry
+    const itemsSnapshot = await pantryRef.collection('items').get();
+    const batch = db.batch();
+
+    itemsSnapshot.docs.forEach((doc) => {
+      batch.delete(doc.ref);
+    });
+
+    // Delete the pantry itself
+    batch.delete(pantryRef);
+
+    // Commit the batch
+    await batch.commit();
+    console.log(`Successfully deleted pantry ${pantryId} and its items`);
+
+    return { success: true, message: 'Pantry and all its items deleted successfully' };
+  } catch (error) {
+    console.error('Error deleting pantry:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+module.exports = { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry, getPantriesForUser, getPantryByNameAndUser, getItemsForPantry, deletePantry };

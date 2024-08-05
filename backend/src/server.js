@@ -2,7 +2,7 @@ console.log('Starting server.js');
 
 const express = require('express');
 const cors = require('cors');
-const { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry, getPantriesForUser, getPantryByNameAndUser, getItemsForPantry } = require('./firebase/services');
+const { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry, getPantriesForUser, getPantryByNameAndUser, getItemsForPantry, deletePantry } = require('./firebase/services');
 const admin = require('firebase-admin');
 
 require('dotenv').config();
@@ -204,10 +204,28 @@ app.post('/api/pantry/:pantryId/item', authenticateUser, async (req, res) => {
   }
 });
 
-// Add a catch-all error handler
+// DELETE route to delete a pantry
+app.delete('/api/pantry/:pantryId', authenticateUser, async (req, res) => {
+  const userId = req.user.uid;
+  const { pantryId } = req.params;
+
+  try {
+    const result = await deletePantry(userId, pantryId);
+    if (result.success) {
+      res.status(200).json({ message: result.message });
+    } else {
+      res.status(400).json({ message: 'Failed to delete pantry', error: result.error });
+    }
+  } catch (error) {
+    console.error('Server error:', error);
+    res.status(500).json({ message: 'Server error', error: error.toString() });
+  }
+});
+
+// Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Unhandled error:', err);
-  res.status(500).json({ message: 'Internal server error', error: err.message });
+  console.error(err.stack);
+  res.status(500).json({ message: 'Something went wrong!', error: err.toString() });
 });
 
 // GET route for user profile
