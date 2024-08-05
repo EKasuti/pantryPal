@@ -1,391 +1,533 @@
-import React, { useState, useEffect, useCallback } from "react"; 
-import Sidebar from "../components/Common/SideBar";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { MdArrowBackIosNew, MdDeleteOutline, MdEdit, MdOutlineKeyboardArrowUp, MdOutlineKeyboardArrowDown } from "react-icons/md";
+import {
+  MdArrowBackIosNew,
+  MdDeleteOutline,
+  MdEdit,
+  MdOutlineKeyboardArrowUp,
+  MdOutlineKeyboardArrowDown,
+} from "react-icons/md";
+import Sidebar from "../components/Common/SideBar";
 import DashboardNavbar from "../components/Common/DashboardNavbar";
 import SearchBar from "../components/Common/SearchBar";
 import AddItems from "../components/Create/AddItems";
 import FilterButton from "../components/Common/FilterButton";
-import { API_BASE_URL } from "../config/api";
 import EditItems from "../components/Edit/EditItem";
+import { API_BASE_URL } from "../config/api";
 
 function PantryListPage({ pantryName: defaultPantryName }) {
-    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-    const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
-    const [isEditItemModalOpen, setIsEditItemModalOpen] = useState(false);
-    const [editingItem, setEditingItem] = useState(null);
-    const [pantryItems, setPantryItems] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [filteredPantryItems, setFilteredPantryItems] = useState([]);
-    const [categoryFilter, setCategoryFilter] = useState('');
-    const { pantryName: urlPantryName } = useParams();
-    const currentPantryName = (urlPantryName || defaultPantryName || "Pantry 01").trim();
-    const navigate = useNavigate();
-    const [user, setUser] = useState(null);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isAddItemModalOpen, setIsAddItemModalOpen] = useState(false);
+  const [isEditItemModalOpen, setIsEditItemModalOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+  const [pantryItems, setPantryItems] = useState([]);
+  const [filteredPantryItems, setFilteredPantryItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [user, setUser] = useState(null);
+  const [reminders, setReminders] = useState({
+    lowQuantityItems: [],
+    nearingExpiryItems: [],
+  });
+  const [pantries, setPantries] = useState([]);
 
-    const fetchUserData = useCallback(async () => {
-        try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!response.ok) throw new Error('Failed to fetch user data');
-            const userData = await response.json();
-            setUser(userData);
-        } catch (error) {
-            setError(error.message);
+  const { pantryName: urlPantryName } = useParams();
+  const currentPantryName = (
+    urlPantryName ||
+    defaultPantryName ||
+    "Pantry 01"
+  ).trim();
+  const navigate = useNavigate();
+
+  const fetchUserData = useCallback(async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!response.ok) throw new Error("Failed to fetch user data");
+      const userData = await response.json();
+      setUser(userData);
+    } catch (error) {
+      setError(error.message);
+    }
+  }, []);
+
+  const fetchPantryItems = useCallback(async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+
+      const pantriesResponse = await fetch(`${API_BASE_URL}/api/pantry/list`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!pantriesResponse.ok) throw new Error("Failed to fetch pantries");
+
+      const pantries = await pantriesResponse.json();
+      const currentPantry = pantries.find(
+        (p) =>
+          p.name.trim().toLowerCase() === currentPantryName.trim().toLowerCase()
+      );
+
+      if (!currentPantry) throw new Error("Pantry not found");
+
+      const itemsUrl = `${API_BASE_URL}/api/pantry/${currentPantry.id}/items`;
+      const response = await fetch(itemsUrl, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error("Failed to fetch pantry items");
+
+      const data = await response.json();
+      setPantryItems(
+        data.map((item, index) => ({ ...item, numericId: index + 1 }))
+      );
+    } catch (error) {
+      setError(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPantryName]);
+
+  const handleQuantityChange = async (itemId, change) => {
+    try {
+      const token = localStorage.getItem('token');
+      const currentItem = pantryItems.find((item) => item.id === itemId);
+      const newQuantity = Math.max(0, currentItem.quantity + change);
+
+      const pantryResponse = await fetch(`${API_BASE_URL}/api/pantry/list`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!pantryResponse.ok) throw new Error("Failed to fetch pantries");
+
+      const pantries = await pantryResponse.json();
+      const currentPantry = pantries.find((p) => p.name === currentPantryName);
+
+      if (!currentPantry) throw new Error("Pantry not found");
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/pantry/${currentPantry.id}/item/${itemId}`,
+        {
+          method: "PATCH",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ quantity: newQuantity }),
         }
-    }, []);
+      );
 
-    const fetchPantryItems = useCallback(async () => {
-        try {
-            setLoading(true);
-            const token = localStorage.getItem('token');
-            
-            const pantriesResponse = await fetch(`${API_BASE_URL}/api/pantry/list`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+      if (!response.ok) throw new Error("Failed to update item quantity");
 
-            if (!pantriesResponse.ok) throw new Error('Failed to fetch pantries');
+      setPantryItems((prevItems) =>
+        prevItems.map((item) =>
+          item.id === itemId ? { ...item, quantity: newQuantity } : item
+        )
+      );
 
-            const pantries = await pantriesResponse.json();
-            const currentPantry = pantries.find(p => p.name.trim().toLowerCase() === currentPantryName.trim().toLowerCase());
+      // Update the pantry's total quantity
+      const quantityDifference = newQuantity - currentItem.quantity;
+      updatePantryQuantity(currentPantry.id, quantityDifference);
 
-            if (!currentPantry) throw new Error('Pantry not found');
+    } catch (error) {
+      setError(error.message);
+    }
+  };
 
-            const itemsUrl = `${API_BASE_URL}/api/pantry/${currentPantry.id}/items`;
-            const response = await fetch(itemsUrl, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+  const updatePantryQuantity = (pantryId, quantityChange) => {
+    setPantries((prevPantries) =>
+      prevPantries.map((pantry) =>
+        pantry.id === pantryId
+          ? { ...pantry, quantity: pantry.quantity + quantityChange }
+          : pantry
+      )
+    );
+  };
 
-            if (!response.ok) throw new Error('Failed to fetch pantry items');
+  const handleAddItem = async (newItem) => {
+    try {
+      const token = localStorage.getItem('token');
 
-            const data = await response.json();
-            setPantryItems(data.map((item, index) => ({ ...item, numericId: index + 1 })));
-        } catch (error) {
-            setError(error.message);
-        } finally {
-            setLoading(false);
+      const pantryResponse = await fetch(`${API_BASE_URL}/api/pantry/list`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!pantryResponse.ok) throw new Error("Failed to fetch pantries");
+
+      const pantries = await pantryResponse.json();
+      const currentPantry = pantries.find((p) => p.name === currentPantryName);
+
+      if (!currentPantry) throw new Error("Pantry not found");
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/pantry/${currentPantry.id}/item`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(newItem),
         }
-    }, [currentPantryName]);
+      );
 
-    useEffect(() => {
-        fetchUserData();
-        fetchPantryItems();
-    }, [fetchUserData, fetchPantryItems]);
+      if (!response.ok) throw new Error("Failed to add new item");
 
-    const handleQuantityChange = async (itemId, change) => {
-        try {
-            const token = localStorage.getItem('token');
-            const currentItem = pantryItems.find(item => item.id === itemId);
-            const newQuantity = Math.max(0, currentItem.quantity + change);
+      const addedItem = await response.json();
 
-            // Find the current pantry
-            const pantryResponse = await fetch(`${API_BASE_URL}/api/pantry/list`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+      setPantryItems((prevItems) => {
+        const newNumericId =
+          prevItems.length > 0
+            ? Math.max(...prevItems.map((item) => item.numericId)) + 1
+            : 1;
+        const updatedItem = { ...addedItem, numericId: newNumericId };
+        return [...prevItems, updatedItem];
+      });
 
-            if (!pantryResponse.ok) throw new Error('Failed to fetch pantries');
+      // Update the pantry's total quantity and items count
+      updatePantryQuantity(currentPantry.id, newItem.quantity);
+      updatePantryItemsCount(currentPantry.id, 1);
 
-            const pantries = await pantryResponse.json();
-            const currentPantry = pantries.find(p => p.name === currentPantryName);
+      setIsAddItemModalOpen(false);
+      await fetchPantryItems();
+    } catch (error) {
+      setError(error.message);
+    }
+  };
 
-            if (!currentPantry) throw new Error('Pantry not found');
+  const updatePantryItemsCount = (pantryId, change) => {
+    setPantries((prevPantries) =>
+      prevPantries.map((pantry) =>
+        pantry.id === pantryId
+          ? { ...pantry, items: pantry.items + change }
+          : pantry
+      )
+    );
+  };
 
-            // Update the item in the backend
-            const response = await fetch(`${API_BASE_URL}/api/pantry/${currentPantry.id}/item/${itemId}`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ quantity: newQuantity })
-            });
+  const handleEditItem = async (updatedItem) => {
+    try {
+      const token = localStorage.getItem("token");
+      const pantryResponse = await fetch(`${API_BASE_URL}/api/pantry/list`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-            if (!response.ok) throw new Error('Failed to update item quantity');
+      if (!pantryResponse.ok) throw new Error("Failed to fetch pantries");
 
-            // Update local state
-            setPantryItems(prevItems => 
-                prevItems.map(item => 
-                    item.id === itemId ? { ...item, quantity: newQuantity } : item
-                )
-            );
-        } catch (error) {
-            setError(error.message);
+      const pantries = await pantryResponse.json();
+      const currentPantry = pantries.find((p) => p.name === currentPantryName);
+
+      if (!currentPantry) throw new Error("Pantry not found");
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/pantry/${currentPantry.id}/item/${updatedItem.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(updatedItem),
         }
-    };
+      );
 
-    const handleAddItem = async (newItem) => {
-        try {
-            const token = localStorage.getItem('token');
-            
-            const pantryResponse = await fetch(`${API_BASE_URL}/api/pantry/list`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+      if (!response.ok) throw new Error("Failed to update item");
 
-            if (!pantryResponse.ok) throw new Error('Failed to fetch pantries');
+      const updatedItemFromServer = await response.json();
 
-            const pantries = await pantryResponse.json();
-            const currentPantry = pantries.find(p => p.name === currentPantryName);
+      setPantryItems((prevItems) =>
+        prevItems.map((item) =>
+          item.id === updatedItem.id
+            ? { ...updatedItemFromServer, numericId: item.numericId }
+            : item
+        )
+      );
 
-            if (!currentPantry) throw new Error('Pantry not found');
+      setIsEditItemModalOpen(false);
+      setEditingItem(null);
+      await fetchPantryItems();
+    } catch (error) {
+      setError(error.message);
+    }
+  };
 
-            const response = await fetch(`${API_BASE_URL}/api/pantry/${currentPantry.id}/item`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(newItem)
-            });
+  const handleDeleteItem = async (itemId) => {
+    try {
+      const token = localStorage.getItem('token');
+      const pantryResponse = await fetch(`${API_BASE_URL}/api/pantry/list`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-            if (!response.ok) throw new Error('Failed to add new item');
+      if (!pantryResponse.ok) throw new Error("Failed to fetch pantries");
 
-            const addedItem = await response.json();
-            
-            setPantryItems(prevItems => {
-                const newNumericId = prevItems.length > 0 ? Math.max(...prevItems.map(item => item.numericId)) + 1 : 1;
-                const updatedItem = { ...addedItem, numericId: newNumericId };
-                return [...prevItems, updatedItem];
-            });
+      const pantries = await pantryResponse.json();
+      const currentPantry = pantries.find((p) => p.name === currentPantryName);
 
-            setIsAddItemModalOpen(false);
-            await fetchPantryItems(); // Refresh the items after adding a new one
-        } catch (error) {
-            setError(error.message);
+      if (!currentPantry) throw new Error("Pantry not found");
+
+      const itemToDelete = pantryItems.find(item => item.id === itemId);
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/pantry/${currentPantry.id}/item/${itemId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-    };
+      );
 
-    const handleEditItem = async (updatedItem) => {
-        try {
-            const token = localStorage.getItem('token');
-            const pantryResponse = await fetch(`${API_BASE_URL}/api/pantry/list`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
+      if (!response.ok) throw new Error("Failed to delete item");
 
-            if (!pantryResponse.ok) throw new Error('Failed to fetch pantries');
+      setPantryItems((prevItems) => {
+        const updatedItems = prevItems.filter((item) => item.id !== itemId);
+        return updatedItems.map((item, index) => ({
+          ...item,
+          numericId: index + 1,
+        }));
+      });
 
-            const pantries = await pantryResponse.json();
-            const currentPantry = pantries.find(p => p.name === currentPantryName);
+      // Update the pantry's total quantity and items count
+      updatePantryQuantity(currentPantry.id, -itemToDelete.quantity);
+      updatePantryItemsCount(currentPantry.id, -1);
 
-            if (!currentPantry) throw new Error('Pantry not found');
+      await fetchPantryItems();
+    } catch (error) {
+      setError(error.message);
+    }
+  };
 
-            const response = await fetch(`${API_BASE_URL}/api/pantry/${currentPantry.id}/item/${updatedItem.id}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(updatedItem)
-            });
-
-            if (!response.ok) throw new Error('Failed to update item');
-
-            const updatedItemFromServer = await response.json();
-
-            setPantryItems(prevItems =>
-                prevItems.map(item =>
-                    item.id === updatedItem.id ? { ...updatedItemFromServer, numericId: item.numericId } : item
-                )
-            );
-
-            setIsEditItemModalOpen(false);
-            setEditingItem(null);
-            await fetchPantryItems(); // Refresh the items after editing an item
-        } catch (error) {
-            setError(error.message);
-        }
-    };
-
-    const handleDeleteItem = async (itemId) => {
-        try {
-            const token = localStorage.getItem('token');
-            const pantryResponse = await fetch(`${API_BASE_URL}/api/pantry/list`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            if (!pantryResponse.ok) throw new Error('Failed to fetch pantries');
-
-            const pantries = await pantryResponse.json();
-            const currentPantry = pantries.find(p => p.name === currentPantryName);
-
-            if (!currentPantry) throw new Error('Pantry not found');
-
-            const response = await fetch(`${API_BASE_URL}/api/pantry/${currentPantry.id}/item/${itemId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (!response.ok) throw new Error('Failed to delete item');
-
-            setPantryItems(prevItems => {
-                const updatedItems = prevItems.filter(item => item.id !== itemId);
-                return updatedItems.map((item, index) => ({ ...item, numericId: index + 1 }));
-            });
-
-            await fetchPantryItems(); // Refresh the items after deleting an item
-        } catch (error) {
-            setError(error.message);
-        }
-    };
-
-    const handleFilter = useCallback((category) => {
-        setCategoryFilter(category);
-        if (category) {
-            const filtered = pantryItems.filter(item => 
-                item.category.toLowerCase().includes(category.toLowerCase())
-            );
-            setFilteredPantryItems(filtered);
-        } else {
-            setFilteredPantryItems(pantryItems);
-        }
-    }, [pantryItems]);
-
-    const handleSearch = useCallback((searchTerm) => {
-        const filtered = pantryItems.filter(item => 
-            item.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-            (categoryFilter ? item.category.toLowerCase().includes(categoryFilter.toLowerCase()) : true)
+  const handleFilter = useCallback(
+    (category) => {
+      setCategoryFilter(category);
+      if (category) {
+        const filtered = pantryItems.filter((item) =>
+          item.category.toLowerCase().includes(category.toLowerCase())
         );
         setFilteredPantryItems(filtered);
-    }, [pantryItems, categoryFilter]);
+      } else {
+        setFilteredPantryItems(pantryItems);
+      }
+    },
+    [pantryItems]
+  );
 
-    useEffect(() => {
-        if (categoryFilter) {
-            handleFilter(categoryFilter);
-        } else {
-            setFilteredPantryItems(pantryItems);
-        }
-    }, [pantryItems, categoryFilter, handleFilter]);
+  const handleSearch = useCallback(
+    (searchTerm) => {
+      const filtered = pantryItems.filter(
+        (item) =>
+          item.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+          (categoryFilter
+            ? item.category.toLowerCase().includes(categoryFilter.toLowerCase())
+            : true)
+      );
+      setFilteredPantryItems(filtered);
+    },
+    [pantryItems, categoryFilter]
+  );
 
-    if (loading) return <div>Loading...</div>;
-    if (error) return <div>Error: {error}</div>;
+  const generateReminders = useCallback(() => {
+    const lowQuantityThreshold = 3;
+    const expiryThresholdDays = 7;
 
-    return (
-        <div className="flex h-screen bg-gray-100">
-            <Sidebar isCollapsed={isSidebarCollapsed} currentPantryName={currentPantryName} />
-            <div className="flex-1 flex flex-col overflow-hidden">
-                <DashboardNavbar 
-                    toggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                    userName={user ? user.name : ''}
-                    isSidebarCollapsed={isSidebarCollapsed}
-                />
-                <main className="flex-1 p-6">
-                    <div className="flex justify-between items-center mb-6">
-                        <button 
-                            className="text-primary flex items-center hover:text-primary-dark"
-                            onClick={() => navigate('/dashboard')}
-                        >
-                            <MdArrowBackIosNew className="mr-1" />
-                            <span>Back</span>
-                        </button>
-                        <div className="flex space-x-4">
-                            <SearchBar 
-                                placeholder={`Search ${currentPantryName} Items`}
-                                onSearch={handleSearch}
-                            />
-                            <FilterButton 
-                                placeholder="Filter by category" 
-                                onFilter={handleFilter}
-                            />
-                            <button 
-                                className="bg-primary text-white px-4 py-2 rounded-md"
-                                onClick={() => setIsAddItemModalOpen(true)}
-                            >
-                                + Item
-                            </button>
-                        </div>
-                    </div>
-                    <table className="w-full bg-white shadow-md rounded-lg">
-                        <thead>
-                            <tr className="border-b">
-                                <th className="text-left p-3">ID</th>
-                                <th className="text-left p-3">Item</th>
-                                <th className="text-left p-3">Category</th>
-                                <th className="text-left p-3">Purchase Date</th>
-                                <th className="text-left p-3">Expiry Date</th>
-                                <th className="text-left p-3">Quantity</th>
-                                <th className="text-left p-3">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredPantryItems.length > 0 ? (
-                                filteredPantryItems.map((item) => (
-                                    <tr key={item.id} className="border-b">
-                                        <td className="p-3">{item.numericId}</td>
-                                        <td className="text-left p-3">{item.name}</td>
-                                        <td className="text-left p-3">{item.category}</td>
-                                        <td className="text-left p-3">{item.purchaseDate}</td>
-                                        <td className="text-left p-3">{item.expiryDate}</td>
-                                        <td className="text-left p-3">
-                                            <div className="flex items-center">
-                                                <button 
-                                                    onClick={() => handleQuantityChange(item.id, 1)}
-                                                    className="text-gray-600 hover:text-blue-600"
-                                                >
-                                                    <MdOutlineKeyboardArrowUp size={24} />
-                                                </button>
-                                                <span className="mx-2">{item.quantity}</span>
-                                                <button 
-                                                    onClick={() => handleQuantityChange(item.id, -1)}
-                                                    className="text-gray-600 hover:text-blue-600"
-                                                    disabled={item.quantity <= 0}
-                                                >
-                                                    <MdOutlineKeyboardArrowDown size={24} />
-                                                </button>
-                                            </div>
-                                        </td>
-                                        <td className="text-left p-3">
-                                            <button 
-                                                className="text-blue-600 mr-2 hover:text-blue-800"
-                                                onClick={() => {
-                                                    setEditingItem(item);
-                                                    setIsEditItemModalOpen(true);
-                                                }}
-                                            >
-                                                <MdEdit size={18} />
-                                            </button>
-                                            <button 
-                                                className="text-red-600 hover:text-red-800"
-                                                onClick={() => handleDeleteItem(item.id)}
-                                            >
-                                                <MdDeleteOutline size={20}/>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))
-                            ) : (
-                                <tr>
-                                    <td colSpan="7" className="text-center p-4">
-                                        No items found in this pantry.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </main>
-            </div>
-            {isAddItemModalOpen && (
-                <AddItems 
-                    pantryName={currentPantryName}
-                    onClose={() => setIsAddItemModalOpen(false)}
-                    onAddItem={handleAddItem}
-                />
-            )}
-            {isEditItemModalOpen && (
-                <EditItems 
-                    item={editingItem}
-                    onClose={() => {
-                        setIsEditItemModalOpen(false);
-                        setEditingItem(null);
-                    }}
-                    onEditItem={handleEditItem}
-                />
-            )}
-        </div>
+    const lowQuantityItems = pantryItems.filter(
+      (item) => item.quantity <= lowQuantityThreshold
     );
+
+    const nearingExpiryItems = pantryItems.filter((item) => {
+      if (!item.expiryDate) return false;
+      const expiryDate = new Date(item.expiryDate);
+      const daysUntilExpiry = Math.ceil(
+        (expiryDate - new Date()) / (1000 * 60 * 60 * 24)
+      );
+      return daysUntilExpiry <= expiryThresholdDays && daysUntilExpiry > 0;
+    });
+
+    return { lowQuantityItems, nearingExpiryItems };
+  }, [pantryItems]);
+
+  useEffect(() => {
+    fetchUserData();
+    fetchPantryItems();
+  }, [fetchUserData, fetchPantryItems]);
+
+  useEffect(() => {
+    if (categoryFilter) {
+      handleFilter(categoryFilter);
+    } else {
+      setFilteredPantryItems(pantryItems);
+    }
+    setReminders(generateReminders());
+  }, [pantryItems, categoryFilter, handleFilter, generateReminders]);
+
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+
+  return (
+    <div className="flex h-screen bg-gray-100">
+      <Sidebar
+        isCollapsed={isSidebarCollapsed}
+        currentPantryName={currentPantryName}
+      />
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <DashboardNavbar
+          toggleSidebar={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          userName={user ? user.name : ""}
+          isSidebarCollapsed={isSidebarCollapsed}
+        />
+        <main className="flex-1 p-6 overflow-y-auto">
+          <div className="flex justify-between items-center mb-6">
+            <button
+              className="text-primary flex items-center hover:text-primary-dark"
+              onClick={() => navigate("/dashboard")}
+            >
+              <MdArrowBackIosNew className="mr-1" />
+              <span>Back</span>
+            </button>
+            <div className="flex space-x-4">
+              <SearchBar
+                placeholder={`Search ${currentPantryName} Items`}
+                onSearch={handleSearch}
+              />
+              <FilterButton
+                placeholder="Filter by category"
+                onFilter={handleFilter}
+              />
+              <button
+                className="bg-primary text-white px-4 py-2 rounded-md"
+                onClick={() => setIsAddItemModalOpen(true)}
+              >
+                + Item
+              </button>
+            </div>
+          </div>
+          <table className="w-full bg-white shadow-md rounded-lg">
+            <thead>
+              <tr className="border-b">
+                <th className="text-left p-3">ID</th>
+                <th className="text-left p-3">Item</th>
+                <th className="text-left p-3">Category</th>
+                <th className="text-left p-3">Purchase Date</th>
+                <th className="text-left p-3">Expiry Date</th>
+                <th className="text-left p-3">Quantity</th>
+                <th className="text-left p-3">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredPantryItems.length > 0 ? (
+                filteredPantryItems.map((item) => (
+                  <tr key={item.id} className="border-b">
+                    <td className="p-3">{item.numericId}</td>
+                    <td className="text-left p-3">{item.name}</td>
+                    <td className="text-left p-3">{item.category}</td>
+                    <td className="text-left p-3">{item.purchaseDate}</td>
+                    <td className="text-left p-3">{item.expiryDate}</td>
+                    <td className="text-left p-3">
+                      <div className="flex items-center">
+                        <button
+                          onClick={() => handleQuantityChange(item.id, 1)}
+                          className="text-gray-600 hover:text-blue-600"
+                        >
+                          <MdOutlineKeyboardArrowUp size={24} />
+                        </button>
+                        <span className="mx-2">{item.quantity}</span>
+                        <button
+                          onClick={() => handleQuantityChange(item.id, -1)}
+                          className="text-gray-600 hover:text-blue-600"
+                          disabled={item.quantity <= 0}
+                        >
+                          <MdOutlineKeyboardArrowDown size={24} />
+                        </button>
+                      </div>
+                    </td>
+                    <td className="text-left p-3">
+                      <button
+                        className="text-blue-600 mr-2 hover:text-blue-800"
+                        onClick={() => {
+                          setEditingItem(item);
+                          setEditingItem(item);
+                          setIsEditItemModalOpen(true);
+                        }}
+                      >
+                        <MdEdit size={18} />
+                      </button>
+                      <button
+                        className="text-red-600 hover:text-red-800"
+                        onClick={() => handleDeleteItem(item.id)}
+                      >
+                        <MdDeleteOutline size={20} />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="7" className="text-center p-4">
+                    Click the "+ Item" button to add items to your pantry.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+
+          <div className="mt-8 bg-white rounded-lg p-4 shadow-md">
+            <h2 className="text-2xl font-semibold mb-4 border-b-2">Reminders</h2>
+            {reminders.lowQuantityItems.length === 0 &&
+            reminders.nearingExpiryItems.length === 0 ? (
+              <p>No reminders at this time.</p>
+            ) : (
+              <div className="space-y-4">
+                {reminders.lowQuantityItems.length > 0 && (
+                  <div className="bg-orange-100 border-l-4 border-yellow-500 text-yellow-700 p-4 rounded-md">
+                    <p className="font-bold">Low Quantity Items:</p>
+                    <ul className="list-disc list-inside">
+                      {reminders.lowQuantityItems.map((item) => (
+                        <li key={item.id}>
+                          {item.name} (Quantity: {item.quantity})
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {reminders.nearingExpiryItems.length > 0 && (
+                  <div className="bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4 rounded-md">
+                    <p className="font-bold">Items Nearing Expiry:</p>
+                    <ul className="list-disc list-inside">
+                      {reminders.nearingExpiryItems.map((item) => (
+                        <li key={item.id}>
+                          {item.name} (Expires: {item.expiryDate})
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+      {isAddItemModalOpen && (
+        <AddItems
+          pantryName={currentPantryName}
+          onClose={() => setIsAddItemModalOpen(false)}
+          onAddItem={handleAddItem}
+        />
+      )}
+      {isEditItemModalOpen && (
+        <EditItems
+          item={editingItem}
+          onClose={() => {
+            setIsEditItemModalOpen(false);
+            setEditingItem(null);
+          }}
+          onEditItem={handleEditItem}
+        />
+      )}
+    </div>
+  );
 }
 
 export default PantryListPage;

@@ -92,6 +92,7 @@ async function createPantry(userId, name, notes = '') {
       userId: userId,
       categories: 0,
       items: 0,
+      quantity: 0,
       notes: notes,
       createdAt: admin.firestore.FieldValue.serverTimestamp(),
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
@@ -133,11 +134,11 @@ async function addItemToPantry(pantryId, item) {
     const itemRef = await pantryRef.collection('items').add(newItem);
     const addedItem = await itemRef.get();
 
-    // Update the categories count and items count
     const categories = new Set((await pantryRef.collection('items').get()).docs.map(doc => doc.data().category));
     await pantryRef.update({ 
       categories: categories.size,
-      items: admin.firestore.FieldValue.increment(1) // Increment items count
+      items: admin.firestore.FieldValue.increment(1),
+      quantity: admin.firestore.FieldValue.increment(item.quantity)
     });
 
     return {
@@ -222,7 +223,6 @@ async function deletePantry(userId, pantryId) {
       throw new Error('Unauthorized: User does not own this pantry');
     }
 
-    // Delete all items in the pantry
     const itemsSnapshot = await pantryRef.collection('items').get();
     const batch = db.batch();
 
@@ -230,10 +230,8 @@ async function deletePantry(userId, pantryId) {
       batch.delete(doc.ref);
     });
 
-    // Delete the pantry itself
     batch.delete(pantryRef);
 
-    // Commit the batch
     await batch.commit();
 
     return { success: true, message: 'Pantry and all its items deleted successfully' };
@@ -247,9 +245,16 @@ async function updateItemQuantity(pantryId, itemId, newQuantity) {
     const pantryRef = db.collection('pantries').doc(pantryId);
     const itemRef = pantryRef.collection('items').doc(itemId);
 
+    const oldItemData = (await itemRef.get()).data();
+    const quantityDifference = newQuantity - oldItemData.quantity;
+
     await itemRef.update({
       quantity: newQuantity,
       updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    await pantryRef.update({
+      quantity: admin.firestore.FieldValue.increment(quantityDifference)
     });
 
     const updatedItem = await itemRef.get();
@@ -271,7 +276,15 @@ async function deleteItemFromPantry(pantryId, itemId) {
     const pantryRef = db.collection('pantries').doc(pantryId);
     const itemRef = pantryRef.collection('items').doc(itemId);
 
+    const itemData = (await itemRef.get()).data();
     await itemRef.delete();
+
+    const categories = new Set((await pantryRef.collection('items').get()).docs.map(doc => doc.data().category));
+    await pantryRef.update({ 
+      categories: categories.size,
+      items: admin.firestore.FieldValue.increment(-1),
+      quantity: admin.firestore.FieldValue.increment(-itemData.quantity)
+    });
 
     return { success: true };
   } catch (error) {
@@ -293,4 +306,19 @@ async function updateItemDetails(pantryId, itemId, updatedDetails) {
   }
 }
 
-module.exports = { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry, getPantriesForUser, getPantryByNameAndUser, getItemsForPantry, deletePantry, updateItemQuantity, deleteItemFromPantry, updateItemDetails };
+async function updatePantryNotes(pantryId, notes) {
+  try {
+    const pantryRef = db.collection('pantries').doc(pantryId);
+    await pantryRef.update({ 
+      notes: notes,
+      updatedAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    const updatedPantry = await pantryRef.get();
+    return { id: updatedPantry.id, ...updatedPantry.data() };
+  } catch (error) {
+    throw error;
+  }
+}
+
+module.exports = { addEmailToWaitlist, getAllWaitlistEntries, createUser, loginUser, createPantry, addItemToPantry, getPantriesForUser, getPantryByNameAndUser, getItemsForPantry, deletePantry, updateItemQuantity, deleteItemFromPantry, updateItemDetails, updatePantryNotes };
