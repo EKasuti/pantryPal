@@ -30,7 +30,7 @@ function PantryListPage({ pantryName: defaultPantryName }) {
     lowQuantityItems: [],
     nearingExpiryItems: [],
   });
-  const [pantries, setPantries] = useState([]);
+  const [, setPantries] = useState([]);
 
   const { pantryName: urlPantryName } = useParams();
   const currentPantryName = (
@@ -379,99 +379,119 @@ function PantryListPage({ pantryName: defaultPantryName }) {
           isSidebarCollapsed={isSidebarCollapsed}
         />
         <main className="flex-1 p-6 overflow-y-auto">
-          <div className="flex justify-between items-center mb-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 space-y-4 md:space-y-0">
             <button
-              className="text-primary flex items-center hover:text-primary-dark"
+              className="text-primary flex items-center hover:text-primary-dark mb-4 md:mb-0"
               onClick={() => navigate("/dashboard")}
             >
               <MdArrowBackIosNew className="mr-1" />
               <span>Back</span>
             </button>
-            <div className="flex space-x-4">
+            <div className="flex items-center space-x-2 w-full md:w-auto">
               <SearchBar
                 placeholder={`Search ${currentPantryName} Items`}
                 onSearch={handleSearch}
+                className="w-8 h-8 md:w-auto md:h-auto"
+                iconOnly={true}
               />
               <FilterButton
                 placeholder="Filter by category"
                 onFilter={handleFilter}
+                className="w-8 h-8 md:w-auto md:h-auto"
+                iconOnly={true}
               />
               <button
-                className="bg-primary text-white px-4 py-2 rounded-md"
+                className="bg-primary text-white px-2 py-2 md:px-4 md:py-2 rounded-md text-l md:text-base"
                 onClick={() => setIsAddItemModalOpen(true)}
               >
-                + Item
+                <span className="hidden md:inline">+ Item</span>
+                <span className="md:hidden">+</span>
               </button>
             </div>
           </div>
-          <table className="w-full bg-white shadow-md rounded-lg">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left p-3">ID</th>
-                <th className="text-left p-3">Item</th>
-                <th className="text-left p-3">Category</th>
-                <th className="text-left p-3">Purchase Date</th>
-                <th className="text-left p-3">Expiry Date</th>
-                <th className="text-left p-3">Quantity</th>
-                <th className="text-left p-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredPantryItems.length > 0 ? (
-                filteredPantryItems.map((item) => (
-                  <tr key={item.id} className="border-b">
-                    <td className="p-3">{item.numericId}</td>
-                    <td className="text-left p-3">{item.name}</td>
-                    <td className="text-left p-3">{item.category}</td>
-                    <td className="text-left p-3">{item.purchaseDate}</td>
-                    <td className="text-left p-3">{item.expiryDate}</td>
-                    <td className="text-left p-3">
-                      <div className="flex items-center">
-                        <button
-                          onClick={() => handleQuantityChange(item.id, 1)}
-                          className="text-gray-600 hover:text-blue-600"
-                        >
-                          <MdOutlineKeyboardArrowUp size={24} />
-                        </button>
-                        <span className="mx-2">{item.quantity}</span>
-                        <button
-                          onClick={() => handleQuantityChange(item.id, -1)}
-                          className="text-gray-600 hover:text-blue-600"
-                          disabled={item.quantity <= 0}
-                        >
-                          <MdOutlineKeyboardArrowDown size={24} />
-                        </button>
-                      </div>
-                    </td>
-                    <td className="text-left p-3">
-                      <button
-                        className="text-blue-600 mr-2 hover:text-blue-800"
-                        onClick={() => {
-                          setEditingItem(item);
-                          setEditingItem(item);
-                          setIsEditItemModalOpen(true);
-                        }}
-                      >
-                        <MdEdit size={18} />
-                      </button>
-                      <button
-                        className="text-red-600 hover:text-red-800"
-                        onClick={() => handleDeleteItem(item.id)}
-                      >
-                        <MdDeleteOutline size={20} />
-                      </button>
+          <div className="overflow-x-auto">
+            <table className="w-full bg-white shadow-md rounded-lg">
+              <thead className="hidden md:table-header-group">
+                <tr className="border-b">
+                  <th className="text-left p-3">ID</th>
+                  <th className="text-left p-3">Item</th>
+                  <th className="text-left p-3">Category</th>
+                  <th className="text-left p-3">Purchase Date</th>
+                  <th className="text-left p-3">Expiry Date</th>
+                  <th className="text-left p-3">Quantity</th>
+                  <th className="text-left p-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredPantryItems.length > 0 ? (
+                  filteredPantryItems.map((item) => (
+                    <tr key={item.id} className="border-b flex flex-col md:table-row">
+                      <td className="p-3 flex justify-between md:table-cell">
+                        <span className="md:hidden font-bold">ID:</span> {item.numericId}
+                      </td>
+                      <td className="p-3 flex justify-between md:table-cell">
+                        <span className="md:hidden font-bold">Item:</span> {item.name}
+                      </td>
+                      <td className="p-3 flex justify-between md:table-cell">
+                        <span className="md:hidden font-bold">Category:</span> {item.category}
+                      </td>
+                      <td className="p-3 flex justify-between md:table-cell">
+                        <span className="md:hidden font-bold">Purchase Date:</span> {item.purchaseDate}
+                      </td>
+                      <td className="p-3 flex justify-between md:table-cell">
+                        <span className="md:hidden font-bold">Expiry Date:</span> {item.expiryDate}
+                      </td>
+                      <td className="p-3 flex justify-between items-center md:table-cell">
+                        <span className="md:hidden font-bold">Quantity:</span>
+                        <div className="flex items-center">
+                          <button
+                            onClick={() => handleQuantityChange(item.id, 1)}
+                            className="text-gray-600 hover:text-blue-600"
+                          >
+                            <MdOutlineKeyboardArrowUp size={24} />
+                          </button>
+                          <span className="mx-2">{item.quantity}</span>
+                          <button
+                            onClick={() => handleQuantityChange(item.id, -1)}
+                            className="text-gray-600 hover:text-blue-600"
+                            disabled={item.quantity <= 0}
+                          >
+                            <MdOutlineKeyboardArrowDown size={24} />
+                          </button>
+                        </div>
+                      </td>
+                      <td className="p-3 flex justify-between md:table-cell">
+                        <span className="md:hidden font-bold">Actions:</span>
+                        <div>
+                          <button
+                            className="text-blue-600 mr-2 hover:text-blue-800"
+                            onClick={() => {
+                              setEditingItem(item);
+                              setIsEditItemModalOpen(true);
+                            }}
+                          >
+                            <MdEdit size={18} />
+                          </button>
+                          <button
+                            className="text-red-600 hover:text-red-800"
+                            onClick={() => handleDeleteItem(item.id)}
+                          >
+                            <MdDeleteOutline size={20} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="7" className="text-center p-4">
+                      Click the "+ Item" button to add items to your pantry.
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="7" className="text-center p-4">
-                    Click the "+ Item" button to add items to your pantry.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                )}
+              </tbody>
+            </table>
+          </div>
 
           <div className="mt-8 bg-white rounded-lg p-4 shadow-md">
             <h2 className="text-2xl font-semibold mb-4 border-b-2">Reminders</h2>

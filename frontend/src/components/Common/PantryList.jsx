@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { FaThumbtack } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
-import { MdDeleteOutline, MdEdit, MdExpandMore, MdExpandLess, MdNoteAdd } from "react-icons/md";
+import { MdDeleteOutline, MdEdit, MdExpandMore, MdExpandLess } from "react-icons/md";
 import { API_BASE_URL } from "../../config/api";
 
 function PantryList({ pantries, onPantryDeleted, onPantryUpdated }) {
@@ -86,7 +86,7 @@ function PantryList({ pantries, onPantryDeleted, onPantryUpdated }) {
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
       {error && (
         <div className="col-span-full bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
           <strong className="font-bold">Error:</strong>
@@ -99,12 +99,12 @@ function PantryList({ pantries, onPantryDeleted, onPantryUpdated }) {
           className="bg-white rounded-lg shadow-md p-4 border"
         >
           <div className="flex justify-between items-center mb-2">
-            <h3 className="text-xl font-semibold">{pantry.name}</h3>
-            <button className="text-gray-400 hover:text-gray-600">
+            <h3 className="text-lg sm:text-xl font-semibold truncate">{pantry.name}</h3>
+            <button className="text-gray-400 hover:text-gray-600 ml-2 flex-shrink-0">
               <FaThumbtack />
             </button>
           </div>
-          <div className="text-sm text-gray-600 mb-2">
+          <div className="text-xs sm:text-sm text-gray-600 mb-2">
             <div className="flex justify-between">
               <span>Categories:</span>
               <span>{pantry.categories || 0}</span>
@@ -113,10 +113,7 @@ function PantryList({ pantries, onPantryDeleted, onPantryUpdated }) {
               <span>Items:</span>
               <span>{pantry.items || 0}</span>
             </div>
-            <div className="flex justify-between">
-              <span>Total Quantity:</span>
-              <span>{pantry.quantity || 0}</span>
-            </div>
+           
           </div>
           {pantry.notes || editingNotes === pantry.id ? (
             <div className="mt-2">
@@ -125,12 +122,12 @@ function PantryList({ pantries, onPantryDeleted, onPantryUpdated }) {
                   <textarea
                     value={newNotes}
                     onChange={(e) => setNewNotes(e.target.value)}
-                    className="w-full p-2 border rounded"
+                    className="w-full p-2 border rounded text-sm"
                     rows="3"
                   />
                   <button
                     onClick={() => handleSaveNotes(pantry.id)}
-                    className="mt-2 bg-primary text-white px-2 py-1 rounded"
+                    className="mt-2 bg-primary text-white px-2 py-1 rounded text-sm"
                   >
                     Save Notes
                   </button>
@@ -139,7 +136,7 @@ function PantryList({ pantries, onPantryDeleted, onPantryUpdated }) {
                 <>
                   <button
                     onClick={() => toggleExpand(pantry.id)}
-                    className="flex items-center text-sm text-primary hover:text-blue-700"
+                    className="flex items-center text-xs sm:text-sm text-primary hover:text-blue-700"
                   >
                     {expandedPantry === pantry.id ? (
                       <>
@@ -152,7 +149,7 @@ function PantryList({ pantries, onPantryDeleted, onPantryUpdated }) {
                     )}
                   </button>
                   {expandedPantry === pantry.id && (
-                    <p className="mt-2 text-sm text-gray-600">{pantry.notes}</p>
+                    <p className="mt-2 text-xs sm:text-sm text-gray-600">{pantry.notes}</p>
                   )}
                 </>
               )}
@@ -161,7 +158,7 @@ function PantryList({ pantries, onPantryDeleted, onPantryUpdated }) {
           <div className="flex justify-between items-center space-x-1 mt-2">
             {!pantry.notes && (
               <button 
-                className="text-primary hover:text-primary-100"
+                className="text-primary hover:text-primary-100 text-xs sm:text-sm"
                 onClick={() => handleAddNotes(pantry.id)}
               >
                 Add a note
@@ -172,13 +169,13 @@ function PantryList({ pantries, onPantryDeleted, onPantryUpdated }) {
                 className="text-primary hover:text-primary-100"
                 onClick={(e) => handleEditClick(e, pantry.name)}
               >
-                <MdEdit size={20} />
+                <MdEdit size={18} />
               </button>
               <button 
                 className="text-red-500 hover:text-red-700"
                 onClick={(e) => handleDeleteClick(e, pantry.id)}
               >
-                <MdDeleteOutline size={20} />
+                <MdDeleteOutline size={18} />
               </button>
             </div>
           </div>
