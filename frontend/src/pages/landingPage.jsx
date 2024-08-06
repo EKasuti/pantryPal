@@ -7,6 +7,7 @@ import recipeImage from "../images/recipe.png";
 import Footer from "../components/Common/Footer";
 import EmailModal from "../components/Waitlist/EmailModal";
 import { API_BASE_URL } from '../config/api';
+import { useNavigate } from 'react-router-dom';
 
 function LandingPage() {
   const [showModal, setShowModal] = useState(false);
@@ -15,10 +16,6 @@ function LandingPage() {
   const [submitMessage, setSubmitMessage] = useState('');
   const [submitError, setSubmitError] = useState('');
   const [activePage, setActivePage] = useState('home');
-
-  function handleOpenModal() {
-    setShowModal(true);
-  }
 
   function handleCloseModal() {
     setShowModal(false);
@@ -74,6 +71,7 @@ function LandingPage() {
       }
     }
   }
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     window.addEventListener('scroll', handleScroll);
@@ -100,7 +98,7 @@ function LandingPage() {
             Stay organized and make the most of your pantry with Pantry Pal.
           </p>
           <button
-            onClick={handleOpenModal}
+            onClick={() => { navigate('/signup')}}
             className="bg-primary text-white px-6 py-3 rounded-lg text-lg font-semibold hover:bg-blue-800 w-full md:w-auto"
           >
             Get Started

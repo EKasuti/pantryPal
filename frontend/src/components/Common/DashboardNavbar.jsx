@@ -1,9 +1,8 @@
 import React from 'react';
-import { FaBars, FaChevronRight, FaUserCircle } from 'react-icons/fa';
+import { FaBars, FaChevronRight } from 'react-icons/fa';
+import { FaRegCircleUser } from "react-icons/fa6";
 
-function DashboardNavbar({ toggleSidebar, isSidebarCollapsed, userName }) {
-  const userInitial = userName ? userName.charAt(0).toUpperCase() : '';
-
+function DashboardNavbar({ toggleSidebar, isSidebarCollapsed }) {
   return (
     <nav className='flex justify-between items-center px-4 py-2 bg-white h-16 shadow-md relative z-10'>
       <button 
@@ -14,13 +13,7 @@ function DashboardNavbar({ toggleSidebar, isSidebarCollapsed, userName }) {
       </button>
 
       <div className="flex items-center">
-        {userInitial ? (
-          <div className="flex items-center justify-center h-8 w-8 rounded-full bg-primary text-white font-semibold text-sm">
-            {userInitial}
-          </div>
-        ) : (
-          <FaUserCircle className="h-8 w-8 text-gray-500" />
-        )}
+        <FaRegCircleUser className="h-8 w-8 text-black" />
       </div>
     </nav>    
   );
